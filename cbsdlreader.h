@@ -28,6 +28,7 @@ private:
 	vector<string>attribute_BOUNDARY_LENGTH;
 	vector<string>attribute_BOUNDARY_REGISTER;
 	vector<vector<string>>attribute_BR_info;
+	vector<string>Generic_info;
 public:
 	CBsdlReader() {};
 	
@@ -35,7 +36,7 @@ public:
 	void  ProcessBsdlFile(string BsdlFileContent);
 	string  SkipProcess(string BsdlFileContent);//跳过无用的信息。
 	void  ProcessEnd(string temp);//处理 entity 关键字
-	//void  ProcessGeneric();//处理 generic 关键字
+	void  ProcessGeneric(string temp);//处理 generic 关键字
 	void  ProcessUse(string temp);//处理 use 关键字
 	void  ProcessConstant(string temp);//处理  constant 关键字
 	void  ProcessAttribute(string temp);//处理attribute关键字

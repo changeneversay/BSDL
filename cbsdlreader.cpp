@@ -20,7 +20,7 @@ void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE
 void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER, smatch result_USERCODE_REGISTER, string temp, vector<string>attribute_USERCODE_REGISTER);
 void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo);
 void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo,vector<vector<string>>attribute_BR_info);
-void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)
+void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)//提供外部接口    并读取存储函数
 {
 	string m_attribute = "";
 	regex keyword_port("port\\s\\([\\s\\S]*([\\W]\\);){1}");
@@ -33,9 +33,14 @@ void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)
 	smatch result_constant;
 	smatch result_use;
 	smatch result_entity;
-	smatch result_genertic;
+	smatch result_generic;
 	smatch result_end;
 	string text = SkipProcess(BsdlFileContent);//实现对 -- 的忽略 并输出一个没有--注释类的string
+	if (regex_search(text, result_generic, keyword_generic))//遍历匹配generic关键字
+	{
+		string m_port = result_generic.str();
+		ProcessGeneric(m_port);
+	}
 	if (regex_search(text, result_port, keyword_port))//遍历匹配port关键字
 	{
 		string m_port = result_port.str();
@@ -61,6 +66,25 @@ void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)
 		string m_temp = result_end.str();
 		ProcessEnd(m_temp);
 	}
+}
+void  CBsdlReader::ProcessGeneric(string temp)
+{
+	string temp_string = "";
+	string::iterator it_str = temp.begin();
+	while (*it_str != '"')
+	{
+		++it_str;
+	}
+	++it_str;//引号前面的不要了
+	while ((isdigit(*it_str)) || (isalpha(*it_str)))
+	{
+		temp_string = temp_string + *it_str;
+		++it_str;
+	}
+	Generic_info.push_back(temp_string);//直接将数字存入
+	cout << "Generic of EPM3032AT44  is " << temp_string << endl;
+	temp_string = "";
+	it_str = temp.end();
 }
 void CBsdlReader::ProcessPort(string temp)
 {
@@ -187,7 +211,7 @@ void CBsdlReader::ProcessConstant(string temp)
 						temp_string = temp_string + *it_str;
 						++it_str;
 					}
-					else if ((*it_str == ',') && (*it_str == ';'))
+					else if ((*it_str == ',') || (*it_str == ';'))
 					{
 						break;
 					}
@@ -373,7 +397,6 @@ void CBsdlReader::ProcessEnd(string temp)
 	temp_string = "";
 	it_str = temp.end();
 }
-
 string CBsdlReader::SkipProcess(string BsdlFileContent)//实现对 -- 的忽略 并输出一个没有--注释类的string（此时可能最后一行仍有注释,但不影响）
 {
 	regex keyword_skip("\\-([\\s\\S]*?)(?=\n)");
@@ -404,7 +427,6 @@ string CBsdlReader::SkipProcess(string BsdlFileContent)//实现对 -- 的忽略 并输出
 	}//此时可能最后一行仍有注释,但不影响
 	return all_text;
 }
-
 void ProcessTAP(regex keyword_tap, smatch result_tap,string temp,vector<string>attribute_tap)
 {
 	if (regex_search(temp, result_tap, keyword_tap))//TDI
