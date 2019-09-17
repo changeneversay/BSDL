@@ -10,36 +10,56 @@
 #include<cctype>
 //应实现对BSDL文件数据分类以及显示
 using namespace std;
-
+void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE, smatch result_COMPONENT_CONFORMANCE, string temp, vector<string>attribute_COMPONENT_CONFORMANCE);
+void ProcessPIN_MAP(regex keyword_PIN_MAP, smatch result_PIN_MAP, string temp,vector<string> attribute_PIN_MAP);
+void ProcessTAP(regex keyword_tap, smatch result_tap, string temp, vector<string>attribute_tap);
+void ProcessTCK(regex keyword_tap, smatch result_tap, string temp, vector<string>attribute_tap);
+void ProcessQuo(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo);
+void Process_INSTRUCTION_CAPTURE(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo);
+void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE_REGISTER, string temp, vector<string>attribute_IDCODE_REGISTER);
+void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER, smatch result_USERCODE_REGISTER, string temp, vector<string>attribute_USERCODE_REGISTER);
+void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo);
+void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo,vector<vector<string>>attribute_BR_info);
 void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)
 {
+	string m_attribute = "";
 	regex keyword_port("port\\s\\([\\s\\S]*([\\W]\\);){1}");
 	regex keyword_constant("constant([\\s\\S]*?);");
-	regex keyword_attribute("^attribute");
+	regex keyword_attribute("attribute([\\s\\S]*?);");
 	regex keyword_use("use\\s([\\s\\S]*?)([\\w];)");
-	regex keyword_end("^end");
-	regex keyword_generic("^generic");
+	regex keyword_end("end([\\s\\S]*?);");
+	regex keyword_generic("generic([\\s\\S]*?);");
 	smatch result_port;
 	smatch result_constant;
 	smatch result_use;
 	smatch result_entity;
-	smatch result_attribute;
 	smatch result_genertic;
+	smatch result_end;
 	string text = SkipProcess(BsdlFileContent);//实现对 -- 的忽略 并输出一个没有--注释类的string
 	if (regex_search(text, result_port, keyword_port))//遍历匹配port关键字
 	{
-		string m_temp = result_port.str();
-		ProcessPort(m_temp);
+		string m_port = result_port.str();
+		ProcessPort(m_port);
 	}
 	if (regex_search(text, result_use, keyword_use))//遍历匹配use关键字
 	{
 		string m_temp = result_use.str();
-		ProcessPort(m_temp);
+		ProcessUse(m_temp);
 	}
+	for (sregex_iterator it(text.begin(), text.end(), keyword_attribute), end_it; it != end_it; ++it)
+	{
+		m_attribute = m_attribute + it->str();
+	}
+	ProcessAttribute(m_attribute);
 	if (regex_search(text, result_constant, keyword_constant))//遍历匹配constant关键字
 	{
 		string m_temp = result_constant.str();
-		ProcessPort(m_temp);
+		ProcessConstant(m_temp);
+	}
+	if (regex_search(text, result_end, keyword_end))
+	{
+		string m_temp = result_end.str();
+		ProcessEnd(m_temp);
 	}
 }
 void CBsdlReader::ProcessPort(string temp)
@@ -57,7 +77,7 @@ void CBsdlReader::ProcessPort(string temp)
 	while ((depend == 0) && (it_str != temp.end()))
 	{
 		while ((*it_str != ':') && (it_str != temp.end()))//在遇见冒号之前存储各管脚名
-		{   //temp_string = *next(it_str);//找了半天，用迭代器的next函数指向迭代器的下一个元素
+		{   
 			m_depend_char = *it_str;
 			if ((isalpha(*it_str)) || (isdigit(*it_str)) || (m_depend_char == 95))//确定存进去的是字母或者数字或下划线
 			{
@@ -121,7 +141,7 @@ void CBsdlReader::ProcessPort(string temp)
 				++it_str;
 			}
 		}//此时it_str为 ; 或者为结束前的 )
-		cout << temp_string <<endl;//读取属性
+		cout << temp_string << endl;//读取属性
 		port_name.push_back(temp_string);//将管脚属性存入port_name里面
 		temp_string = "";//清除字符串数据
 		if ((j != 1)&&(it_str != temp.end()))//此时*it_str为 ;
@@ -140,24 +160,219 @@ void CBsdlReader::ProcessPort(string temp)
 	port_info.push_back(port_name);//再将port_name打包存入port_info里面
 	it_str = temp.end();
 }   
+void CBsdlReader::ProcessConstant(string temp)
+{
+	string::iterator it_str = temp.begin();
+	int i = 0;
+	int j = 0;
+	string temp_string = "";
+	cout << "CONSTANT: " << endl;
+	while (*it_str != '"')
+	{
+		++it_str;
+	}
+	++it_str;//引号前面的不要了
+	while (*it_str != ';')
+	{
+		while ((*it_str != '\n')&&( *it_str != ';'))
+		{
+			i = 0;
+			while ((*it_str != ',') && (*it_str != ';'))
+			{
+				while ((*it_str != ':')&&(*it_str != '\n') && (*it_str != ';')&&(j == 0))
+				{
+					j = 1;
+					if ((*it_str == '_') || (isalpha(*it_str)) || (isalnum(*it_str)))
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					else if ((*it_str == ',') && (*it_str == ';'))
+					{
+						break;
+					}
+					else
+					{
+						++it_str;
+					}
+				}//出来为: 或\n 或;
+				if (*it_str == ';')
+				{
+					break;
+				}
+				if (*it_str == ':')
+				{
+					++it_str;
+					constant_name.push_back(temp_string);
+					cout << temp_string << "  ";
+					temp_string = "";
+				}
+				if ((isalnum(*it_str))&&(j ==1))
+				{
+					j = 0;
+					while (isalnum(*it_str))
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					constant_name.push_back(temp_string);
+					cout << temp_string << "  ";
+					temp_string = "";
+				}
+				if (*it_str == '(')
+				{
+					++it_str;
+					while (*it_str != ')')
+					{
+						if (isalnum(*it_str))
+						{
+							while (isalnum(*it_str))
+							{
+								temp_string = temp_string + *it_str;
+								++it_str;
+							}
+							constant_name.push_back(temp_string);
+							cout << temp_string << "  ";
+							temp_string = "";
+						}
+						else
+						{
+							++it_str;
+						}
+					}
+				}
+				if ((*it_str == ',')||(*it_str =='\n'))
+				{
+					break;
+				}
+				else
+				{
+					++it_str;
+				}
+			}//出来为逗号或者\n或者)
+			if (*it_str == ';')
+			{
+				break;
+			}
+			if ((*it_str == '\n')&&( i == 0))
+			{
+				i = 1;
+				constant_info.push_back(constant_name);
+				temp_string = "";
+				break;
+			}
+			if ((*it_str != '\n')&& (i == 0))
+			{
+				i = 1;
+				constant_info.push_back(constant_name);
+				temp_string = "";
+				++it_str;
+			}
+			else
+			{
+				temp_string = "";
+				++it_str;
+			}
+
+		}
+		if (*it_str != ';')
+		{
+			++it_str;
+		}
+	}
+	it_str = temp.end();
+	temp_string = "";
+
+}
 
 void CBsdlReader::ProcessUse(string temp)
 {
-
+	temp.erase(0, 4);
+	string::iterator it_str = temp.begin();
+	string temp_string = "";
+	while (*it_str != '.')
+	{
+		temp_string = temp_string + *it_str;
+		++it_str;
+	}
+	++it_str;//.的下一位
+	cout << "use:" << temp_string << ".";
+	temp_string = "";
+	use_info.push_back(temp_string);
+	while(*it_str !=';')
+	{
+		temp_string = temp_string + *it_str;
+		++it_str;
+	}
+	use_info.push_back(temp_string);
+	cout <<temp_string << endl;
+	temp_string = "";
+	it_str = temp.end();
 }
-//void CBsdlReader::ProcessConstant(string temp)
-//{
-//
-//}
-
-
-
-
-
-
-
-
-	
+void CBsdlReader::ProcessAttribute(string temp)
+{
+	regex keyword_COMPONENT_CONFORMANCE("COMPONENT_CONFORMANCE([\\s\\S]*?);");
+	regex keyword_PIN_MAP("PIN_MAP([\\s\\S]*?);");
+	regex keyword_TDI("TAP_SCAN_IN([\\s\\S]*?);");
+	regex keyword_TDO("TAP_SCAN_MODE([\\s\\S]*?);");
+	regex keyword_TMS("TAP_SCAN_OUT([\\s\\S]*?);");
+	regex keyword_TCK("TAP_SCAN_CLOCK([\\s\\S]*?);");
+	regex keyword_INSTRUCTION_LENGTH("INSTRUCTION_LENGTH([\\s\\S]*?);");
+	regex keyword_INSTRUCTION_OPCODE("INSTRUCTION_OPCODE([\\s\\S]*?);");
+	regex keyword_INSTRUCTION_CAPTURE("INSTRUCTION_CAPTURE([\\s\\S]*?);");
+	regex keyword_INSTRUCTION_DISABLE("INSTRUCTION_DISABLE([\\s\\S]*?);");
+	regex keyword_INSTRUCTION_GUARD("INSTRUCTION_GUARD([\\s\\S]*?);");
+	regex keyword_REGISTER_ACCESS("REGISTER_ACCESS([\\s\\S]*?);");
+	regex keyword_BOUNDARY_LENGTH("BOUNDARY_LENGTH([\\s\\S]*?);");
+	regex keyword_BOUNDARY_REGISTER("BOUNDARY_REGISTER([\\s\\S]*?);"); 
+	regex keyword_IDCODE_REGISTER("IDCODE_REGISTER([\\s\\S]*?);");
+	regex keyword_USERCODE_REGISTER("USERCODE_REGISTER([\\s\\S]*?);");
+	smatch result_IDCODE_REGISTER;
+	smatch result_USERCODE_REGISTER;
+	smatch result_PIN_MAP;
+	smatch result_COMPONENT_CONFORMANCE;
+	smatch result_TDI;
+	smatch result_TDO;
+	smatch result_TMS;
+	smatch result_TCK;
+	smatch result_INSTRUCTION_LENGTH;
+	smatch result_INSTRUCTION_OPCODE;
+	smatch result_INSTRUCTION_CAPTURE;
+	smatch result_INSTRUCTION_DISABLE;
+	smatch result_INSTRUCTION_GUARD;
+	smatch result_REGISTER_ACCESS;
+	smatch result_BOUNDARY_LENGTH;
+	smatch result_BOUNDARY_REGISTER;
+	Process_COMPONENT_CONFORMANCE(keyword_COMPONENT_CONFORMANCE, result_COMPONENT_CONFORMANCE, temp, attribute_COMPONENT_CONFORMANCE);
+	ProcessPIN_MAP(keyword_PIN_MAP, result_PIN_MAP, temp, attribute_PIN_MAP);
+	ProcessTAP(keyword_TDI, result_TDI, temp, attribute_TDI);
+	ProcessTAP(keyword_TMS, result_TMS, temp, attribute_TMS); 
+	ProcessTAP(keyword_TDO, result_TDO, temp, attribute_TDO);
+	ProcessTCK(keyword_TCK, result_TCK, temp, attribute_TCK);
+	ProcessTAP(keyword_INSTRUCTION_LENGTH, result_INSTRUCTION_LENGTH, temp, attribute_INSTRUCTION_LENGTH);//INSTRUCTION_LENGTH关键字和TAP相似  可以直接用TAP函数
+	ProcessQuo(keyword_INSTRUCTION_OPCODE, result_INSTRUCTION_OPCODE, temp, attribute_INSTRUCTION_OPCODE);
+	Process_INSTRUCTION_CAPTURE(keyword_INSTRUCTION_CAPTURE, result_INSTRUCTION_CAPTURE, temp, attribute_INSTRUCTION_CAPTURE);
+	Process_IDCODE_REGISTER(keyword_IDCODE_REGISTER, result_IDCODE_REGISTER, temp, attribute_IDCODE_REGISTER);
+	Process_USERCODE_REGISTER(keyword_USERCODE_REGISTER, result_USERCODE_REGISTER, temp, attribute_USERCODE_REGISTER);
+	ProcessREGISTER_ACCESS(keyword_REGISTER_ACCESS, result_REGISTER_ACCESS, temp, attribute_REGISTER_ACCESS);
+	ProcessTAP(keyword_BOUNDARY_LENGTH, result_BOUNDARY_LENGTH, temp, attribute_BOUNDARY_LENGTH);
+	Process_BOUNDARY_REGISTER(keyword_BOUNDARY_REGISTER, result_BOUNDARY_REGISTER, temp, attribute_BOUNDARY_REGISTER, attribute_BR_info);
+}
+void CBsdlReader::ProcessEnd(string temp)
+{
+	temp.erase(0, 4);
+	string::iterator it_str = temp.begin();
+	string temp_string = "";
+	while (*it_str != ';')
+	{
+		temp_string = temp_string + *it_str;
+		++it_str;
+	}
+	cout << "end " << temp_string;
+	end_info.push_back(temp_string);
+	temp_string = "";
+	it_str = temp.end();
+}
 
 string CBsdlReader::SkipProcess(string BsdlFileContent)//实现对 -- 的忽略 并输出一个没有--注释类的string（此时可能最后一行仍有注释,但不影响）
 {
@@ -190,11 +405,467 @@ string CBsdlReader::SkipProcess(string BsdlFileContent)//实现对 -- 的忽略 并输出
 	return all_text;
 }
 
+void ProcessTAP(regex keyword_tap, smatch result_tap,string temp,vector<string>attribute_tap)
+{
+	if (regex_search(temp, result_tap, keyword_tap))//TDI
+	{
+		string m_tap = result_tap.str();
+		cout << m_tap << endl;
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		while (*it_str != ':')
+		{
+			++it_str;
+		}
+		++it_str;
+		while (*it_str != ';')
+		{
+			temp_string = temp_string + *it_str;
+			++it_str;
+		}
+		temp_string.erase(0, 11);
+		attribute_tap.push_back(temp_string);
+		it_str = m_tap.end();
+		temp_string = "";
+	}
+}
+void ProcessTCK(regex keyword_tap, smatch result_tap, string temp, vector<string>attribute_tap)
+{
+	if (regex_search(temp, result_tap, keyword_tap))
+	{
+		string m_tap = result_tap.str();
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		while (*it_str != '(')
+		{
+			++it_str;
+		}
+		++it_str;
+		while (*it_str != ',')
+		{
+				temp_string = temp_string + *it_str;
+				++it_str;
+		}
+		attribute_tap.push_back(temp_string);//存入括号第一个信息
+		cout << "attribute TAP_SCAN_CLOCK of TCK  : signal is (" << temp_string << ",";
+		++it_str;
+		temp_string = "";
+		while (*it_str != ')')
+		{
+			if (isalpha(*it_str))
+			{
+				temp_string = temp_string + *it_str;
+				++it_str;
+			}
+			else
+			{
+				++it_str;
+			}
+		}
+		attribute_tap.push_back(temp_string);//存入括号第二个信息
+		cout << temp_string << ");" << endl;
+		it_str = m_tap.end();
+		temp_string = "";
+	}
+}
+void ProcessQuo(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo)
+{
+	if (regex_search(temp, result_quo, keyword_quo))
+	{
+		string m_tap = result_quo.str();
+		int i = 0;
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		while (*it_str != '"')
+		{
+			++it_str;
+		}
+		++it_str;//引号前面的不要了
+		while ((*it_str != ';')&&(it_str != m_tap.end()))
+		{
+			while (*it_str != '\n')
+			{
+				if (isupper(*it_str))
+				{
+					while ((isupper(*it_str))&& (*it_str != ';'))
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					attribute_quo.push_back(temp_string);//存入指令名称
+					cout << temp_string << "         ";
+					temp_string = "";
+				}
+				if (*it_str == '(')
+				{
+					++it_str;
+					while ((isdigit(*it_str))&&(it_str != m_tap.end()))
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					attribute_quo.push_back(temp_string);//存入指令代码
+					cout << temp_string << endl;
+					temp_string = "";
+				}
+				if (*it_str == ';')
+				{
+					i = 1;
+					break;
+					
+				}
+				++it_str;
+			}
+			if (i != 1)
+			{
+				++it_str;
+			}
+		}
+		it_str = temp.end();
+	}
+}
+void Process_INSTRUCTION_CAPTURE(regex keyword_INSTRUCTION_CAPTURE, smatch result_INSTRUCTION_CAPTURE, string temp, vector<string>attribute_INSTRUCTION_CAPTURE)
+{
+	if (regex_search(temp, result_INSTRUCTION_CAPTURE, keyword_INSTRUCTION_CAPTURE))
+	{
+		string m_tap = result_INSTRUCTION_CAPTURE.str();
+		string temp_string = "";
 
+		string::iterator it_str = m_tap.begin();
+		while (*it_str != '"')
+		{
+			++it_str;
+		}
+		++it_str;//引号前面的不要了
+		while ((isdigit(*it_str)) && (it_str != m_tap.end()))
+		{
+			temp_string = temp_string + *it_str;
+			++it_str;
+		}
+		attribute_INSTRUCTION_CAPTURE.push_back(temp_string);//直接将数字存入
+		cout << "INSTRUCTION_CAPTURE of EPM3032AT44 : entity is " << temp_string << endl;
+		temp_string = "";
+		it_str = temp.end();
+	}
+}
+void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE_REGISTER, string temp, vector<string>attribute_IDCODE_REGISTER)
+{
+	if (regex_search(temp, result_IDCODE_REGISTER, keyword_IDCODE_REGISTER))
+	{
+		string m_tap = result_IDCODE_REGISTER.str();
+		cout << m_tap << endl;
+		int i = 0;
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		while (*it_str != '"')
+		{
+			++it_str;
+		}
+		++it_str;//引号前面的不要了
+		while ((*it_str != ';') && (it_str != m_tap.end()))
+		{
+			while (*it_str != '\n')
+			{
+				if ((isdigit(*it_str)) && (it_str != m_tap.end()))
+				{
+					while ((isdigit(*it_str)) && (it_str != m_tap.end()))
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					attribute_IDCODE_REGISTER.push_back(temp_string);
+					temp_string = "";
+				}
+				if (*it_str != ';')
+				{
+					++it_str;
+				}
+				else
+				{
+					break;
+				}
+				
+			}
+			if (*it_str == ';')
+			{
+     			i = 1;
+				break;
+			}
+		    if (i != 1)
+		    {
+			++it_str;
+		    }
+	    }
+		it_str = temp.end();
+	}
+}
+void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER, smatch result_USERCODE_REGISTER, string temp, vector<string>attribute_USERCODE_REGISTER)
+{
+	if (regex_search(temp, result_USERCODE_REGISTER, keyword_USERCODE_REGISTER))
+	{
+		string m_tap = result_USERCODE_REGISTER.str();
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		while (*it_str != '"')
+		{
+			++it_str;
+		}
+		++it_str;//引号前面的不要了
+		while ((*it_str != '"') && (it_str != m_tap.end()))
+		{
+			temp_string = temp_string + *it_str;
+			++it_str;
+		}
+		attribute_USERCODE_REGISTER.push_back(temp_string);
+		cout << temp_string << endl;
+		temp_string = "";
+		it_str = temp.end();
+	}
+}
+void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo)
+{
+	if (regex_search(temp, result_quo, keyword_quo))
+	{
+		string m_tap = result_quo.str();
+		int i = 0;
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		char m_tempr = NULL;
+		bool depend = (m_tempr == '_') || (m_tempr == '[') || (m_tempr == ']');	
+		while (*it_str != '"')
+		{
+		++it_str;
+		}
+		++it_str;//引号前面的不要了
+		m_tempr = *it_str;
+		depend = (m_tempr == '_') || (m_tempr == '[') || (m_tempr == ']');
+		while ((*it_str != ';') && (it_str != m_tap.end()))
+		{
+			while ((*it_str != '\n') && (*it_str != ';'))
+			{
+				if ((!isblank(*it_str)) && (*it_str != '(') && (*it_str != ';'))
+				{
+					if ((isalpha(*it_str)) || (isalnum(*it_str)) || (depend))
+					{
+						while ((isalpha(*it_str)) || (isalnum(*it_str)) || (depend))
+						{
+							temp_string = temp_string + *it_str;
+							++it_str;
+							m_tempr = *it_str;
+							depend = (m_tempr == '_') || (m_tempr == '[') || (m_tempr == ']');
+						}
+						attribute_quo.push_back(temp_string);//存入指令名称
+						cout << temp_string << "         ";
+						temp_string = "";
+					}
+				}
+				if (*it_str == '(')
+				{
+					++it_str;
+					while (*it_str != ')')
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					attribute_quo.push_back(temp_string);//存入指令数据
+					cout << temp_string << endl;
+					temp_string = "";
+				}
+				if (*it_str == ';')
+				{
+					i = 1;
+					break;
+				}
+				++it_str;
+			}
+			if (*it_str == ';')
+			{
+				i = 1;
+				break;
+			}
+			if (i != 1)
+			{
+				++it_str;
+			}
+		}
+		it_str = temp.end();
+	}
+}
+void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo, vector<vector<string>>attribute_BR_info)
+{
+	if (regex_search(temp, result_quo, keyword_quo))
+	{
+		string m_tap = result_quo.str();
 
-
-
-
-
-
-
+		int i = 0;
+		int j = 0;
+		int k = 0;
+	/*	int m = 0;*/
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		char m_char = NULL;
+		m_char = *it_str;
+		bool depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_') || (m_char == '(') || (m_char == ')');
+		bool pick = (j == 1) && (*it_str == ')');
+		while (*it_str != '"')
+		{
+			++it_str;
+		}
+		++it_str;//第一个引号前面的不要了
+		while ((*it_str != ';') && (it_str != m_tap.end()))
+		{
+			while ((*it_str != '\n') && (*it_str != ';'))
+			{
+				if ((isdigit(*it_str)) && (*prev(it_str) == '"'))//存储引号里面的开头数字
+				{
+					while ((isdigit(*it_str)) && (it_str != m_tap.end()))
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					attribute_quo.push_back(temp_string);
+					cout << temp_string << ":  ";
+					temp_string = "";
+				}
+				if (*it_str == '(')
+				{
+					++it_str;
+					m_char = *it_str;
+					depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+					pick = (j == 1) && (*it_str == ')');
+					while (*it_str != ')')
+					{
+						while (((*it_str != ',') && (*it_str != ')'))||pick)
+						{
+							if (depend || (*it_str == '(') || (*it_str == ')'))
+							{
+								if (depend)
+								{
+									temp_string = temp_string + *it_str;
+									++it_str;
+									pick = (j == 1) && (*it_str == ')');
+									m_char = *it_str;
+									depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+								}
+								if (*it_str == '(')
+								{
+								temp_string = temp_string + *it_str;
+								++it_str;
+								j = 1;
+								pick = (j == 1) && (*it_str == ')');
+								m_char = *it_str;
+								depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+								}
+								if ((*it_str == ')') && (j == 1))
+								{
+									temp_string = temp_string + *it_str;
+									++it_str;
+									j = 0;
+									m_char = *it_str;
+									depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+								}
+							}
+							else
+							{
+									++it_str;
+									m_char = *it_str;
+									pick = (j == 1) && (*it_str == ')');
+									depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+							}
+						}
+						if (*it_str == ',')
+						{
+							attribute_quo.push_back(temp_string);
+							cout << temp_string << "    ";
+							temp_string = "";
+							++it_str;
+							pick = (j == 1) && (*it_str == ')');
+							m_char = *it_str;
+							depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+						}
+						if (*it_str == ')')
+						{
+							attribute_quo.push_back(temp_string);
+							cout << temp_string<<"    ";
+							temp_string = "";
+							break;
+						}
+					}
+					temp_string = "";
+					++it_str;
+					pick = (j == 1) && (*it_str == ')');
+					m_char = *it_str;
+					depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+				}//出来为 ）的下一位
+				++it_str;
+			}//出来为\n或;
+			if (*it_str == '\n')
+			{
+				attribute_BR_info.push_back(attribute_quo);
+				++it_str;
+				k = 1;
+			}
+		}
+		if (k != 1)
+		{
+			attribute_BR_info.push_back(attribute_quo);
+		}
+		temp_string = "";
+		it_str = temp.end();
+	}
+}
+void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE,smatch result_COMPONENT_CONFORMANCE, string temp, vector<string>attribute_COMPONENT_CONFORMANCE)
+{
+	if (regex_search(temp, result_COMPONENT_CONFORMANCE, keyword_COMPONENT_CONFORMANCE))//保存显示COMPONENT_CONFORMANCE字串属性
+	{
+		string m_COMPONENT_CONFORMANCE = result_COMPONENT_CONFORMANCE.str();
+		string temp_string = "";
+		string::iterator it_str = m_COMPONENT_CONFORMANCE.begin();
+		while (*it_str != '"')
+		{
+			++it_str;
+		}//*it_str此刻为"
+		++it_str;
+		while (*it_str != '"')//存储引号内为数字  字母  下滑线的部分
+		{
+			char m_depend_char = *it_str;
+			if ((isalpha(*it_str)) || (isdigit(*it_str)) || (m_depend_char == 95))//确定存进去的是字母或者数字或下划线
+			{
+				temp_string = temp_string + *it_str;
+				++it_str;
+				m_depend_char = *it_str;
+			}
+			else
+			{
+				++it_str;
+			}
+		}
+		attribute_COMPONENT_CONFORMANCE.push_back(temp_string);
+		cout << "attribute COMPONENT_CONFORMANCE of EPM3032AT44 :entity is " << temp_string << endl;
+		temp_string = "";
+		it_str = m_COMPONENT_CONFORMANCE.end();
+	}
+}
+void ProcessPIN_MAP(regex keyword_PIN_MAP, smatch result_PIN_MAP, string temp, vector<string> attribute_PIN_MAP)
+{
+	if (regex_search(temp, result_PIN_MAP, keyword_PIN_MAP))
+	{
+		string m_PIN_MAP = result_PIN_MAP.str();
+		string temp_string = "";
+		m_PIN_MAP.erase(0, 7);
+		string::iterator it_str = m_PIN_MAP.begin();
+		while (!isupper(*it_str))
+		{
+			++it_str;
+		}
+		while (*it_str != ';')
+		{
+			temp_string = temp_string + *it_str;
+			++it_str;
+		}
+		attribute_PIN_MAP.push_back(temp_string);
+		it_str = m_PIN_MAP.end();
+		cout << "attribute PIN_MAP of EPM3032AT44 : entity is " << temp_string << endl;
+		temp_string = "";
+	}
+}
