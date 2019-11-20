@@ -8,18 +8,21 @@
 #include<cstdio>
 #include<iterator>
 #include<cctype>
-//Ó¦ÊµÏÖ¶ÔBSDLÎÄ¼þÊý¾Ý·ÖÀàÒÔ¼°ÏÔÊ¾
+//Ó¦ÊµÏÖ¶ÔBSDLÎÄ¼þÊý¾Ý·ÖÀàÒÔ¼°ÏÔÊ¾vector<std::string>attribute_INSTRUCTION_OPCODE_info
 using namespace std;
-void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE, smatch result_COMPONENT_CONFORMANCE, string temp, vector<string>attribute_COMPONENT_CONFORMANCE);
-void ProcessPIN_MAP(regex keyword_PIN_MAP, smatch result_PIN_MAP, string temp,vector<string> attribute_PIN_MAP);
-void ProcessTAP(regex keyword_tap, smatch result_tap, string temp, vector<string>attribute_tap);
-void ProcessTCK(regex keyword_tap, smatch result_tap, string temp, vector<string>attribute_tap);
-void ProcessQuo(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo);
-void Process_INSTRUCTION_CAPTURE(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo);
-void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE_REGISTER, string temp, vector<string>attribute_IDCODE_REGISTER);
-void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER, smatch result_USERCODE_REGISTER, string temp, vector<string>attribute_USERCODE_REGISTER);
-void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo);
-void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo,vector<vector<string>>attribute_BR_info);
+//void  readthefile();
+void Get_vector_data();
+void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE,smatch result_COMPONENT_CONFORMANCE, string temp, vector<string>&attribute_COMPONENT_CONFORMANCE);
+void ProcessPIN_MAP(regex keyword_PIN_MAP,smatch result_PIN_MAP, string temp, vector<string>&attribute_PIN_MAP);
+void ProcessTAP(regex keyword_tap, smatch result_tap, string temp, vector<string>&attribute_tap);
+void ProcessTCK( regex keyword_tap,smatch result_tap, string temp, vector<string>&attribute_tap);
+void ProcessQuo(regex keyword_quo,smatch result_quo, string temp, vector<string>&attribute_quo);
+void Process_INSTRUCTION_CAPTURE(regex keyword_quo,smatch result_quo, string temp, vector<string>&attribute_quo);
+void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE_REGISTER, string temp, vector<string>&attribute_IDCODE_REGISTER);
+void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER,smatch result_USERCODE_REGISTER, string temp, vector<string>&attribute_USERCODE_REGISTER);
+void ProcessREGISTER_ACCESS(regex keyword_quo,smatch result_quo, string temp, vector<string>&attribute_quo);
+void Process_BOUNDARY_REGISTER(regex keyword_quo,smatch result_quo, string temp, vector<string>&attribute_quo, vector<vector<string>>&attribute_BR_info);
+void Process_INSTRUCTION_OPCODE(regex keyword_quo,smatch result_quo, string temp, vector<string>&attribute_quo, vector<vector<string>>&attribute_BR_info);
 void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)//Ìá¹©Íâ²¿½Ó¿Ú    ²¢¶ÁÈ¡´æ´¢º¯Êý
 {
 	string m_attribute = "";
@@ -67,10 +70,10 @@ void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)//Ìá¹©Íâ²¿½Ó¿Ú    ²¢¶ÁÈ
 		ProcessEnd(m_temp);
 	}
 }
-void  CBsdlReader::ProcessGeneric(string temp)
+void  CBsdlReader::ProcessGeneric(const string& temp)
 {
 	string temp_string = "";
-	string::iterator it_str = temp.begin();
+	auto it_str = temp.begin();
 	while (*it_str != '"')
 	{
 		++it_str;
@@ -82,7 +85,6 @@ void  CBsdlReader::ProcessGeneric(string temp)
 		++it_str;
 	}
 	Generic_info.push_back(temp_string);//Ö±½Ó½«Êý×Ö´æÈë
-	cout << "Generic of EPM3032AT44  is " << temp_string << endl;
 	temp_string = "";
 	it_str = temp.end();
 }
@@ -101,7 +103,7 @@ void CBsdlReader::ProcessPort(string temp)
 	while ((depend == 0) && (it_str != temp.end()))
 	{
 		while ((*it_str != ':') && (it_str != temp.end()))//ÔÚÓö¼ûÃ°ºÅÖ®Ç°´æ´¢¸÷¹Ü½ÅÃû
-		{   
+		{
 			m_depend_char = *it_str;
 			if ((isalpha(*it_str)) || (isdigit(*it_str)) || (m_depend_char == 95))//È·¶¨´æ½øÈ¥µÄÊÇ×ÖÄ¸»òÕßÊý×Ö»òÏÂ»®Ïß
 			{
@@ -115,7 +117,6 @@ void CBsdlReader::ProcessPort(string temp)
 				if (*it_str == ',')
 				{
 					port_name.push_back(temp_string);
-					cout << temp_string << ",";//¶ÁÈ¡Ôª¼þ
 					++it_str;//¶ººÅÏÂÒ»¸ö
 					i = 1;
 					temp_string = "";//Çå³ý×Ö·û´®Êý¾Ý
@@ -137,7 +138,6 @@ void CBsdlReader::ProcessPort(string temp)
 		if ((i != 1) && (it_str != temp.end()))//±ÜÃâÖØ¸´´æ´¢
 		{
 			port_name.push_back(temp_string);
-			cout << temp_string << ":";//¶ÁÈ¡Ôª¼þ
 			++it_str;//Ã°ºÅÏÂÒ»¸ö
 			temp_string = "";//Çå³ý×Ö·û´®Êý¾Ý
 			depend = (*it_str == ')') && (!isdigit(*prev(it_str)));//Òª¸üÐÂ°¡£¡£¡£¡Ç°ÃæÄÇ¸öÊÇ¹Ì¶¨µÄ£¡£¡£¡
@@ -165,14 +165,13 @@ void CBsdlReader::ProcessPort(string temp)
 				++it_str;
 			}
 		}//´ËÊ±it_strÎª ; »òÕßÎª½áÊøÇ°µÄ )
-		cout << temp_string << endl;//¶ÁÈ¡ÊôÐÔ
 		port_name.push_back(temp_string);//½«¹Ü½ÅÊôÐÔ´æÈëport_nameÀïÃæ
 		temp_string = "";//Çå³ý×Ö·û´®Êý¾Ý
-		if ((j != 1)&&(it_str != temp.end()))//´ËÊ±*it_strÎª ;
+		if ((j != 1) && (it_str != temp.end()))//´ËÊ±*it_strÎª ;
 		{
 			++it_str;//;ÏÂÒ»Î»
 			bool pack = (m_temp_char == ' ') || (m_temp_char == '\n');
-			while(pack && (it_str != temp.end()))
+			while (pack && (it_str != temp.end()))
 			{
 				++it_str;
 				m_temp_char = *it_str;
@@ -183,14 +182,13 @@ void CBsdlReader::ProcessPort(string temp)
 	}
 	port_info.push_back(port_name);//ÔÙ½«port_name´ò°ü´æÈëport_infoÀïÃæ
 	it_str = temp.end();
-}   
-void CBsdlReader::ProcessConstant(string temp)
+}
+void CBsdlReader::ProcessConstant(const string& temp)
 {
-	string::iterator it_str = temp.begin();
+	auto it_str = temp.begin();
 	int i = 0;
 	int j = 0;
 	string temp_string = "";
-	cout << "CONSTANT: " << endl;
 	while (*it_str != '"')
 	{
 		++it_str;
@@ -198,12 +196,12 @@ void CBsdlReader::ProcessConstant(string temp)
 	++it_str;//ÒýºÅÇ°ÃæµÄ²»ÒªÁË
 	while (*it_str != ';')
 	{
-		while ((*it_str != '\n')&&( *it_str != ';'))
+		while ((*it_str != '\n') && (*it_str != ';'))
 		{
 			i = 0;
 			while ((*it_str != ',') && (*it_str != ';'))
 			{
-				while ((*it_str != ':')&&(*it_str != '\n') && (*it_str != ';')&&(j == 0))
+				while ((*it_str != ':') && (*it_str != '\n') && (*it_str != ';') && (j == 0))
 				{
 					j = 1;
 					if ((*it_str == '_') || (isalpha(*it_str)) || (isalnum(*it_str)))
@@ -228,10 +226,9 @@ void CBsdlReader::ProcessConstant(string temp)
 				{
 					++it_str;
 					constant_name.push_back(temp_string);
-					cout << temp_string << "  ";
 					temp_string = "";
 				}
-				if ((isalnum(*it_str))&&(j ==1))
+				if ((isalnum(*it_str)) && (j == 1))
 				{
 					j = 0;
 					while (isalnum(*it_str))
@@ -240,7 +237,6 @@ void CBsdlReader::ProcessConstant(string temp)
 						++it_str;
 					}
 					constant_name.push_back(temp_string);
-					cout << temp_string << "  ";
 					temp_string = "";
 				}
 				if (*it_str == '(')
@@ -256,7 +252,6 @@ void CBsdlReader::ProcessConstant(string temp)
 								++it_str;
 							}
 							constant_name.push_back(temp_string);
-							cout << temp_string << "  ";
 							temp_string = "";
 						}
 						else
@@ -265,7 +260,7 @@ void CBsdlReader::ProcessConstant(string temp)
 						}
 					}
 				}
-				if ((*it_str == ',')||(*it_str =='\n'))
+				if ((*it_str == ',') || (*it_str == '\n'))
 				{
 					break;
 				}
@@ -278,14 +273,14 @@ void CBsdlReader::ProcessConstant(string temp)
 			{
 				break;
 			}
-			if ((*it_str == '\n')&&( i == 0))
+			if ((*it_str == '\n') && (i == 0))
 			{
 				i = 1;
 				constant_info.push_back(constant_name);
 				temp_string = "";
 				break;
 			}
-			if ((*it_str != '\n')&& (i == 0))
+			if ((*it_str != '\n') && (i == 0))
 			{
 				i = 1;
 				constant_info.push_back(constant_name);
@@ -320,61 +315,60 @@ void CBsdlReader::ProcessUse(string temp)
 		++it_str;
 	}
 	++it_str;//.µÄÏÂÒ»Î»
-	cout << "use:" << temp_string << ".";
 	temp_string = "";
 	use_info.push_back(temp_string);
-	while(*it_str !=';')
+	while (*it_str != ';')
 	{
 		temp_string = temp_string + *it_str;
 		++it_str;
 	}
 	use_info.push_back(temp_string);
-	cout <<temp_string << endl;
+	cout << temp_string << endl;
 	temp_string = "";
 	it_str = temp.end();
 }
 void CBsdlReader::ProcessAttribute(string temp)
 {
-	regex keyword_COMPONENT_CONFORMANCE("COMPONENT_CONFORMANCE([\\s\\S]*?);");
-	regex keyword_PIN_MAP("PIN_MAP([\\s\\S]*?);");
-	regex keyword_TDI("TAP_SCAN_IN([\\s\\S]*?);");
-	regex keyword_TDO("TAP_SCAN_MODE([\\s\\S]*?);");
-	regex keyword_TMS("TAP_SCAN_OUT([\\s\\S]*?);");
-	regex keyword_TCK("TAP_SCAN_CLOCK([\\s\\S]*?);");
-	regex keyword_INSTRUCTION_LENGTH("INSTRUCTION_LENGTH([\\s\\S]*?);");
-	regex keyword_INSTRUCTION_OPCODE("INSTRUCTION_OPCODE([\\s\\S]*?);");
-	regex keyword_INSTRUCTION_CAPTURE("INSTRUCTION_CAPTURE([\\s\\S]*?);");
-	regex keyword_INSTRUCTION_DISABLE("INSTRUCTION_DISABLE([\\s\\S]*?);");
-	regex keyword_INSTRUCTION_GUARD("INSTRUCTION_GUARD([\\s\\S]*?);");
-	regex keyword_REGISTER_ACCESS("REGISTER_ACCESS([\\s\\S]*?);");
-	regex keyword_BOUNDARY_LENGTH("BOUNDARY_LENGTH([\\s\\S]*?);");
-	regex keyword_BOUNDARY_REGISTER("BOUNDARY_REGISTER([\\s\\S]*?);"); 
-	regex keyword_IDCODE_REGISTER("IDCODE_REGISTER([\\s\\S]*?);");
-	regex keyword_USERCODE_REGISTER("USERCODE_REGISTER([\\s\\S]*?);");
-	smatch result_IDCODE_REGISTER;
-	smatch result_USERCODE_REGISTER;
-	smatch result_PIN_MAP;
-	smatch result_COMPONENT_CONFORMANCE;
-	smatch result_TDI;
-	smatch result_TDO;
-	smatch result_TMS;
-	smatch result_TCK;
-	smatch result_INSTRUCTION_LENGTH;
-	smatch result_INSTRUCTION_OPCODE;
-	smatch result_INSTRUCTION_CAPTURE;
-	smatch result_INSTRUCTION_DISABLE;
-	smatch result_INSTRUCTION_GUARD;
-	smatch result_REGISTER_ACCESS;
-	smatch result_BOUNDARY_LENGTH;
-	smatch result_BOUNDARY_REGISTER;
+	const regex keyword_COMPONENT_CONFORMANCE("COMPONENT_CONFORMANCE([\\s\\S]*?);");
+	const regex keyword_PIN_MAP("PIN_MAP([\\s\\S]*?);");
+	const regex keyword_TDI("TAP_SCAN_IN([\\s\\S]*?);");
+	const regex keyword_TDO("TAP_SCAN_MODE([\\s\\S]*?);");
+	const regex keyword_TMS("TAP_SCAN_OUT([\\s\\S]*?);");
+	const regex keyword_TCK("TAP_SCAN_CLOCK([\\s\\S]*?);");
+	const regex keyword_INSTRUCTION_LENGTH("INSTRUCTION_LENGTH([\\s\\S]*?);");
+	const regex keyword_INSTRUCTION_OPCODE("INSTRUCTION_OPCODE([\\s\\S]*?);");
+	const regex keyword_INSTRUCTION_CAPTURE("INSTRUCTION_CAPTURE([\\s\\S]*?);");
+	const regex keyword_INSTRUCTION_DISABLE("INSTRUCTION_DISABLE([\\s\\S]*?);");
+	const regex keyword_INSTRUCTION_GUARD("INSTRUCTION_GUARD([\\s\\S]*?);");
+	const regex keyword_REGISTER_ACCESS("REGISTER_ACCESS([\\s\\S]*?);");
+	const regex keyword_BOUNDARY_LENGTH("BOUNDARY_LENGTH([\\s\\S]*?);");
+	const regex keyword_BOUNDARY_REGISTER("BOUNDARY_REGISTER([\\s\\S]*?);");
+	const regex keyword_IDCODE_REGISTER("IDCODE_REGISTER([\\s\\S]*?);");
+	const regex keyword_USERCODE_REGISTER("USERCODE_REGISTER([\\s\\S]*?);");
+	const smatch result_IDCODE_REGISTER;
+	const smatch result_USERCODE_REGISTER;
+	const smatch result_PIN_MAP;
+	const smatch result_COMPONENT_CONFORMANCE;
+	const smatch result_TDI;
+	const smatch result_TDO;
+	const smatch result_TMS;
+	const smatch result_TCK;
+	const smatch result_INSTRUCTION_LENGTH;
+	const smatch result_INSTRUCTION_OPCODE;
+	const smatch result_INSTRUCTION_CAPTURE;
+	const smatch result_INSTRUCTION_DISABLE;
+	const smatch result_INSTRUCTION_GUARD;
+	const smatch result_REGISTER_ACCESS;
+	const smatch result_BOUNDARY_LENGTH;
+	const smatch result_BOUNDARY_REGISTER;
 	Process_COMPONENT_CONFORMANCE(keyword_COMPONENT_CONFORMANCE, result_COMPONENT_CONFORMANCE, temp, attribute_COMPONENT_CONFORMANCE);
 	ProcessPIN_MAP(keyword_PIN_MAP, result_PIN_MAP, temp, attribute_PIN_MAP);
 	ProcessTAP(keyword_TDI, result_TDI, temp, attribute_TDI);
-	ProcessTAP(keyword_TMS, result_TMS, temp, attribute_TMS); 
+	ProcessTAP(keyword_TMS, result_TMS, temp, attribute_TMS);
 	ProcessTAP(keyword_TDO, result_TDO, temp, attribute_TDO);
 	ProcessTCK(keyword_TCK, result_TCK, temp, attribute_TCK);
 	ProcessTAP(keyword_INSTRUCTION_LENGTH, result_INSTRUCTION_LENGTH, temp, attribute_INSTRUCTION_LENGTH);//INSTRUCTION_LENGTH¹Ø¼ü×ÖºÍTAPÏàËÆ  ¿ÉÒÔÖ±½ÓÓÃTAPº¯Êý
-	ProcessQuo(keyword_INSTRUCTION_OPCODE, result_INSTRUCTION_OPCODE, temp, attribute_INSTRUCTION_OPCODE);
+	Process_INSTRUCTION_OPCODE(keyword_INSTRUCTION_OPCODE, result_INSTRUCTION_OPCODE, temp, attribute_INSTRUCTION_OPCODE,attribute_INSTRUCTION_OPCODE_info);
 	Process_INSTRUCTION_CAPTURE(keyword_INSTRUCTION_CAPTURE, result_INSTRUCTION_CAPTURE, temp, attribute_INSTRUCTION_CAPTURE);
 	Process_IDCODE_REGISTER(keyword_IDCODE_REGISTER, result_IDCODE_REGISTER, temp, attribute_IDCODE_REGISTER);
 	Process_USERCODE_REGISTER(keyword_USERCODE_REGISTER, result_USERCODE_REGISTER, temp, attribute_USERCODE_REGISTER);
@@ -392,12 +386,11 @@ void CBsdlReader::ProcessEnd(string temp)
 		temp_string = temp_string + *it_str;
 		++it_str;
 	}
-	cout << "end " << temp_string;
 	end_info.push_back(temp_string);
 	temp_string = "";
 	it_str = temp.end();
 }
-string CBsdlReader::SkipProcess(string BsdlFileContent)//ÊµÏÖ¶Ô -- µÄºöÂÔ ²¢Êä³öÒ»¸öÃ»ÓÐ--×¢ÊÍÀàµÄstring£¨´ËÊ±¿ÉÄÜ×îºóÒ»ÐÐÈÔÓÐ×¢ÊÍ,µ«²»Ó°Ïì£©
+string CBsdlReader::SkipProcess(string& BsdlFileContent)//ÊµÏÖ¶Ô -- µÄºöÂÔ ²¢Êä³öÒ»¸öÃ»ÓÐ--×¢ÊÍÀàµÄstring£¨´ËÊ±¿ÉÄÜ×îºóÒ»ÐÐÈÔÓÐ×¢ÊÍ,µ«²»Ó°Ïì£©
 {
 	regex keyword_skip("\\-([\\s\\S]*?)(?=\n)");
 	smatch result_skip;
@@ -427,12 +420,11 @@ string CBsdlReader::SkipProcess(string BsdlFileContent)//ÊµÏÖ¶Ô -- µÄºöÂÔ ²¢Êä³ö
 	}//´ËÊ±¿ÉÄÜ×îºóÒ»ÐÐÈÔÓÐ×¢ÊÍ,µ«²»Ó°Ïì
 	return all_text;
 }
-void ProcessTAP(regex keyword_tap, smatch result_tap,string temp,vector<string>attribute_tap)
+void ProcessTAP(regex keyword_tap,smatch result_tap, string temp, vector<string>&attribute_tap)
 {
 	if (regex_search(temp, result_tap, keyword_tap))//TDI
 	{
 		string m_tap = result_tap.str();
-		cout << m_tap << endl;
 		string temp_string = "";
 		string::iterator it_str = m_tap.begin();
 		while (*it_str != ':')
@@ -451,7 +443,7 @@ void ProcessTAP(regex keyword_tap, smatch result_tap,string temp,vector<string>a
 		temp_string = "";
 	}
 }
-void ProcessTCK(regex keyword_tap, smatch result_tap, string temp, vector<string>attribute_tap)
+void ProcessTCK(regex keyword_tap,smatch result_tap, string temp, vector<string>&attribute_tap)
 {
 	if (regex_search(temp, result_tap, keyword_tap))
 	{
@@ -465,11 +457,10 @@ void ProcessTCK(regex keyword_tap, smatch result_tap, string temp, vector<string
 		++it_str;
 		while (*it_str != ',')
 		{
-				temp_string = temp_string + *it_str;
-				++it_str;
+			temp_string = temp_string + *it_str;
+			++it_str;
 		}
 		attribute_tap.push_back(temp_string);//´æÈëÀ¨ºÅµÚÒ»¸öÐÅÏ¢
-		cout << "attribute TAP_SCAN_CLOCK of TCK  : signal is (" << temp_string << ",";
 		++it_str;
 		temp_string = "";
 		while (*it_str != ')')
@@ -485,12 +476,11 @@ void ProcessTCK(regex keyword_tap, smatch result_tap, string temp, vector<string
 			}
 		}
 		attribute_tap.push_back(temp_string);//´æÈëÀ¨ºÅµÚ¶þ¸öÐÅÏ¢
-		cout << temp_string << ");" << endl;
 		it_str = m_tap.end();
 		temp_string = "";
 	}
 }
-void ProcessQuo(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo)
+void ProcessQuo(regex keyword_quo,smatch result_quo, string temp, vector<string>&attribute_quo)
 {
 	if (regex_search(temp, result_quo, keyword_quo))
 	{
@@ -503,38 +493,36 @@ void ProcessQuo(regex keyword_quo, smatch result_quo, string temp, vector<string
 			++it_str;
 		}
 		++it_str;//ÒýºÅÇ°ÃæµÄ²»ÒªÁË
-		while ((*it_str != ';')&&(it_str != m_tap.end()))
+		while ((*it_str != ';') && (it_str != m_tap.end()))
 		{
 			while (*it_str != '\n')
 			{
 				if (isupper(*it_str))
 				{
-					while ((isupper(*it_str))&& (*it_str != ';'))
+					while ((isupper(*it_str)) && (*it_str != ';'))
 					{
 						temp_string = temp_string + *it_str;
 						++it_str;
 					}
 					attribute_quo.push_back(temp_string);//´æÈëÖ¸ÁîÃû³Æ
-					cout << temp_string << "         ";
 					temp_string = "";
 				}
 				if (*it_str == '(')
 				{
 					++it_str;
-					while ((isdigit(*it_str))&&(it_str != m_tap.end()))
+					while ((isdigit(*it_str)) && (it_str != m_tap.end()))
 					{
 						temp_string = temp_string + *it_str;
 						++it_str;
 					}
 					attribute_quo.push_back(temp_string);//´æÈëÖ¸Áî´úÂë
-					cout << temp_string << endl;
 					temp_string = "";
 				}
 				if (*it_str == ';')
 				{
 					i = 1;
 					break;
-					
+
 				}
 				++it_str;
 			}
@@ -546,7 +534,7 @@ void ProcessQuo(regex keyword_quo, smatch result_quo, string temp, vector<string
 		it_str = temp.end();
 	}
 }
-void Process_INSTRUCTION_CAPTURE(regex keyword_INSTRUCTION_CAPTURE, smatch result_INSTRUCTION_CAPTURE, string temp, vector<string>attribute_INSTRUCTION_CAPTURE)
+void Process_INSTRUCTION_CAPTURE(regex keyword_INSTRUCTION_CAPTURE, smatch result_INSTRUCTION_CAPTURE, string temp, vector<string>&attribute_INSTRUCTION_CAPTURE)
 {
 	if (regex_search(temp, result_INSTRUCTION_CAPTURE, keyword_INSTRUCTION_CAPTURE))
 	{
@@ -565,17 +553,15 @@ void Process_INSTRUCTION_CAPTURE(regex keyword_INSTRUCTION_CAPTURE, smatch resul
 			++it_str;
 		}
 		attribute_INSTRUCTION_CAPTURE.push_back(temp_string);//Ö±½Ó½«Êý×Ö´æÈë
-		cout << "INSTRUCTION_CAPTURE of EPM3032AT44 : entity is " << temp_string << endl;
 		temp_string = "";
 		it_str = temp.end();
 	}
 }
-void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE_REGISTER, string temp, vector<string>attribute_IDCODE_REGISTER)
+void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE_REGISTER, string temp, vector<string>&attribute_IDCODE_REGISTER)
 {
 	if (regex_search(temp, result_IDCODE_REGISTER, keyword_IDCODE_REGISTER))
 	{
 		string m_tap = result_IDCODE_REGISTER.str();
-		cout << m_tap << endl;
 		int i = 0;
 		string temp_string = "";
 		string::iterator it_str = m_tap.begin();
@@ -606,22 +592,22 @@ void Process_IDCODE_REGISTER(regex keyword_IDCODE_REGISTER, smatch result_IDCODE
 				{
 					break;
 				}
-				
+
 			}
 			if (*it_str == ';')
 			{
-     			i = 1;
+				i = 1;
 				break;
 			}
-		    if (i != 1)
-		    {
-			++it_str;
-		    }
-	    }
+			if (i != 1)
+			{
+				++it_str;
+			}
+		}
 		it_str = temp.end();
 	}
 }
-void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER, smatch result_USERCODE_REGISTER, string temp, vector<string>attribute_USERCODE_REGISTER)
+void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER, smatch result_USERCODE_REGISTER, string temp, vector<string>& attribute_USERCODE_REGISTER)
 {
 	if (regex_search(temp, result_USERCODE_REGISTER, keyword_USERCODE_REGISTER))
 	{
@@ -639,12 +625,11 @@ void Process_USERCODE_REGISTER(regex keyword_USERCODE_REGISTER, smatch result_US
 			++it_str;
 		}
 		attribute_USERCODE_REGISTER.push_back(temp_string);
-		cout << temp_string << endl;
 		temp_string = "";
 		it_str = temp.end();
 	}
 }
-void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo)
+void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, vector<string>&attribute_quo)
 {
 	if (regex_search(temp, result_quo, keyword_quo))
 	{
@@ -653,10 +638,10 @@ void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, v
 		string temp_string = "";
 		string::iterator it_str = m_tap.begin();
 		char m_tempr = NULL;
-		bool depend = (m_tempr == '_') || (m_tempr == '[') || (m_tempr == ']');	
+		bool depend = (m_tempr == '_') || (m_tempr == '[') || (m_tempr == ']');
 		while (*it_str != '"')
 		{
-		++it_str;
+			++it_str;
 		}
 		++it_str;//ÒýºÅÇ°ÃæµÄ²»ÒªÁË
 		m_tempr = *it_str;
@@ -677,7 +662,6 @@ void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, v
 							depend = (m_tempr == '_') || (m_tempr == '[') || (m_tempr == ']');
 						}
 						attribute_quo.push_back(temp_string);//´æÈëÖ¸ÁîÃû³Æ
-						cout << temp_string << "         ";
 						temp_string = "";
 					}
 				}
@@ -690,7 +674,6 @@ void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, v
 						++it_str;
 					}
 					attribute_quo.push_back(temp_string);//´æÈëÖ¸ÁîÊý¾Ý
-					cout << temp_string << endl;
 					temp_string = "";
 				}
 				if (*it_str == ';')
@@ -713,7 +696,7 @@ void ProcessREGISTER_ACCESS(regex keyword_quo, smatch result_quo, string temp, v
 		it_str = temp.end();
 	}
 }
-void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp, vector<string>attribute_quo, vector<vector<string>>attribute_BR_info)
+void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp, vector<string>& attribute_quo, vector<vector<string>>& attribute_BR_info)
 {
 	if (regex_search(temp, result_quo, keyword_quo))
 	{
@@ -722,7 +705,7 @@ void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp
 		int i = 0;
 		int j = 0;
 		int k = 0;
-	/*	int m = 0;*/
+		/*	int m = 0;*/
 		string temp_string = "";
 		string::iterator it_str = m_tap.begin();
 		char m_char = NULL;
@@ -746,7 +729,6 @@ void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp
 						++it_str;
 					}
 					attribute_quo.push_back(temp_string);
-					cout << temp_string << ":  ";
 					temp_string = "";
 				}
 				if (*it_str == '(')
@@ -757,7 +739,7 @@ void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp
 					pick = (j == 1) && (*it_str == ')');
 					while (*it_str != ')')
 					{
-						while (((*it_str != ',') && (*it_str != ')'))||pick)
+						while (((*it_str != ',') && (*it_str != ')')) || pick)
 						{
 							if (depend || (*it_str == '(') || (*it_str == ')'))
 							{
@@ -771,12 +753,12 @@ void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp
 								}
 								if (*it_str == '(')
 								{
-								temp_string = temp_string + *it_str;
-								++it_str;
-								j = 1;
-								pick = (j == 1) && (*it_str == ')');
-								m_char = *it_str;
-								depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+									temp_string = temp_string + *it_str;
+									++it_str;
+									j = 1;
+									pick = (j == 1) && (*it_str == ')');
+									m_char = *it_str;
+									depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
 								}
 								if ((*it_str == ')') && (j == 1))
 								{
@@ -789,16 +771,15 @@ void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp
 							}
 							else
 							{
-									++it_str;
-									m_char = *it_str;
-									pick = (j == 1) && (*it_str == ')');
-									depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
+								++it_str;
+								m_char = *it_str;
+								pick = (j == 1) && (*it_str == ')');
+								depend = (m_char == '*') || (isalpha(m_char)) || (isalnum(m_char)) || (m_char == '_');
 							}
 						}
 						if (*it_str == ',')
 						{
 							attribute_quo.push_back(temp_string);
-							cout << temp_string << "    ";
 							temp_string = "";
 							++it_str;
 							pick = (j == 1) && (*it_str == ')');
@@ -808,7 +789,6 @@ void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp
 						if (*it_str == ')')
 						{
 							attribute_quo.push_back(temp_string);
-							cout << temp_string<<"    ";
 							temp_string = "";
 							break;
 						}
@@ -836,7 +816,7 @@ void Process_BOUNDARY_REGISTER(regex keyword_quo, smatch result_quo, string temp
 		it_str = temp.end();
 	}
 }
-void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE,smatch result_COMPONENT_CONFORMANCE, string temp, vector<string>attribute_COMPONENT_CONFORMANCE)
+void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE, smatch result_COMPONENT_CONFORMANCE, string temp, vector<string>&attribute_COMPONENT_CONFORMANCE)
 {
 	if (regex_search(temp, result_COMPONENT_CONFORMANCE, keyword_COMPONENT_CONFORMANCE))//±£´æÏÔÊ¾COMPONENT_CONFORMANCE×Ö´®ÊôÐÔ
 	{
@@ -863,12 +843,11 @@ void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE,smatch re
 			}
 		}
 		attribute_COMPONENT_CONFORMANCE.push_back(temp_string);
-		cout << "attribute COMPONENT_CONFORMANCE of EPM3032AT44 :entity is " << temp_string << endl;
 		temp_string = "";
 		it_str = m_COMPONENT_CONFORMANCE.end();
 	}
 }
-void ProcessPIN_MAP(regex keyword_PIN_MAP, smatch result_PIN_MAP, string temp, vector<string> attribute_PIN_MAP)
+void ProcessPIN_MAP(regex keyword_PIN_MAP, smatch result_PIN_MAP, string temp, vector<string>& attribute_PIN_MAP)
 {
 	if (regex_search(temp, result_PIN_MAP, keyword_PIN_MAP))
 	{
@@ -887,7 +866,86 @@ void ProcessPIN_MAP(regex keyword_PIN_MAP, smatch result_PIN_MAP, string temp, v
 		}
 		attribute_PIN_MAP.push_back(temp_string);
 		it_str = m_PIN_MAP.end();
-		cout << "attribute PIN_MAP of EPM3032AT44 : entity is " << temp_string << endl;
 		temp_string = "";
 	}
+}
+
+void Process_INSTRUCTION_OPCODE(regex keyword_quo, smatch result_quo, string temp, vector<string>& attribute_quo, vector<vector<string>>& attribute_BR_info)
+{
+	if (regex_search(temp, result_quo, keyword_quo))
+	{
+		string m_tap = result_quo.str();
+
+		int i = 0;
+		int j = 0;
+		int k = 0;
+		/*	int m = 0;*/
+		string temp_string = "";
+		string::iterator it_str = m_tap.begin();
+		while (*it_str != '"')
+		{
+			++it_str;
+		}
+		++it_str;//µÚÒ»¸öÒýºÅÇ°ÃæµÄ²»ÒªÁË
+		while ((*it_str != ';') && (it_str != m_tap.end()))
+		{
+			while ((*it_str != '\n') && (*it_str != ';'))
+			{
+				if ((isalpha(*it_str)) && (*prev(it_str) == '"'))//´æ´¢ÒýºÅÀïÃæµÄ¿ªÍ·Ö¸ÁîÃû
+				{
+					while ((isalpha(*it_str)) && (it_str != m_tap.end()))
+					{
+						temp_string = temp_string + *it_str;
+						++it_str;
+					}
+					attribute_quo.push_back(temp_string);
+					temp_string = "";
+				}
+				if (*it_str == '(')
+				{
+					while (*it_str != ')')
+					{
+						while ((*it_str != ',') && (*it_str != ')')) 
+						{
+							if (isalnum(*it_str))
+							{
+								temp_string = temp_string + *it_str;
+								++it_str;
+							}
+							else
+							{
+								++it_str;
+							}
+						}
+						if (*it_str == ',')
+						{
+							attribute_quo.push_back(temp_string);
+							temp_string = "";
+							++it_str;
+						}
+					}
+					attribute_BR_info.push_back(attribute_quo);
+					temp_string = "";
+					++it_str;
+				}//³öÀ´Îª £©µÄÏÂÒ»Î»
+				++it_str;
+			}//³öÀ´Îª\n»ò;
+			if (*it_str == '\n')
+			{
+				attribute_BR_info.push_back(attribute_quo);
+				++it_str;
+				k = 1;
+			}
+		}
+		if (k != 1)
+		{
+			attribute_BR_info.push_back(attribute_quo);
+		}
+		temp_string = "";
+		it_str = temp.end();
+	}
+}
+void  get_vector_data()
+{
+
 }
