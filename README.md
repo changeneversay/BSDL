@@ -6,3 +6,8 @@
 4   将lib文件夹中的libmysql.lib和libmysql.dll拷贝到本地项目文件夹中。
 5       项目--属性---链接器---输入---附加依赖项 添加 libmysql.lib
 
+注意：头文件中
+#include <winsock.h>
+#include <mysql.h>
+#pragma comment(lib,"libmySQL.lib")  //要加不然会编译出错
+顺序不要错
