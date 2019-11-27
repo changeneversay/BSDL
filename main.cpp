@@ -1,6 +1,5 @@
-﻿// ConsoleApplication12.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
-//
 #include"cbsdlreader.h"
+#include "connect_database.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,27 +8,25 @@
 #include <string>
 #include <list>
 #include<cctype>
-
+#include <winsock.h>
+#include <mysql.h>
+#pragma comment(lib,"libmySQL.lib")  //Ҫ�Ӳ�Ȼ��������
 using namespace std;
-
 int main()
 {
-	ifstream inFile_BSDL("C:/Users/changeneversay/Desktop/边界扫描/BS文件/bsdl文件/EPM3032AT44.bsdl");
+	ifstream inFile_BSDL("C:/Users/changeneversay/Desktop/�߽�ɨ��/BS�ļ�/bsdl�ļ�/SN74BCT8244A.bsdl");
 	ostringstream temp;
 	temp << inFile_BSDL.rdbuf();
 	string BsdlFileContent = temp.str();
-	CBsdlReader* d =new CBsdlReader;
+	CBsdlReader* d = new CBsdlReader;
 	d->ProcessBsdlFile(BsdlFileContent);
+	auto c = d->Get_BRdata();
+	auto a = d->Get_portdata();
+	auto b = d->Get_constantdata();
+	MyDataBase m;
+	m.Process_database(a,b,c);
 	delete d;
 	d = nullptr;
 	system("pause");
 	return 0;
 }
-
-
-
-
-
-
-
-
