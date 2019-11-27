@@ -19,7 +19,7 @@ C:\Program Files\MySQL\MySQL Server 8.0\lib 目录编辑到   项目--属性---�
 
 注意：
 1
-头文件中
+connect_database.h与main.cpp文件中
 
 #include <winsock.h>
 
