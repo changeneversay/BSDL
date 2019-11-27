@@ -1,5 +1,5 @@
 # BSDL文件的解析代码
-环境配置：
+环境配置（visual studio）：
 
 1
 需要安装MySQL数据库，之后新建C++项目，
@@ -36,7 +36,6 @@ connect_database.h与main.cpp文件中
 如果仍然编译出错，请将配置管理器切换成X64/X86后，重新生成解决方案
 
 3
-
 请修改main.cpp文件中的inFile_BSDL（）括号内的文件路径为你需要解析的BSDL文件路径
 
 请修改connect-database.cpp文件的Process_database函数内connect函数的参数值，将其改为自己的用户名与密码
