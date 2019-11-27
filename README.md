@@ -34,3 +34,9 @@ connect_database.h与main.cpp文件中
 
 2
 如果仍然编译出错，请将配置管理器切换成X64/X86后，重新生成解决方案
+
+3
+
+请修改main.cpp文件中的inFile_BSDL（）括号内的文件路径为你需要解析的BSDL文件路径
+
+请修改connect-database.cpp文件的Process_database函数内connect函数的参数值，将其改为自己的用户名与密码
