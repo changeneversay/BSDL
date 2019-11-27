@@ -24,6 +24,7 @@ C:\Program Files\MySQL\MySQL Server 8.0\lib 目录编辑到   项目--属性---�
 #include <mysql.h>
 
 
+
 #pragma comment(lib,"libmySQL.lib") 
 
 //要加不然会编译出错，顺序不要错
