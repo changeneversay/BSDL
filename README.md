@@ -17,7 +17,9 @@ C:\Program Files\MySQL\MySQL Server 8.0\lib 目录编辑到   项目--属性---�
 
 
 
-注意：头文件中
+注意：
+1
+头文件中
 
 #include <winsock.h>
 
@@ -29,3 +31,6 @@ C:\Program Files\MySQL\MySQL Server 8.0\lib 目录编辑到   项目--属性---�
 #pragma comment(lib,"libmySQL.lib") 
 
 //要加不然会编译出错，顺序不要错
+
+2
+如果仍然编译出错，请将配置管理器切换成X64/X86后，重新生成解决方案
