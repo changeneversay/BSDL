@@ -4,6 +4,7 @@
 #include<iostream>
 #include<vector>
 using namespace std;
+void insert_info(MyDataBase mdb, const string& tem2, const string& tem3, const string& tem4, const vector<vector<string>>& port_v, const vector<vector<string>>& constant_v, const vector<vector<string>>& br_v, const vector<vector<string>>& d, const vector<vector<string>>& e);
 void MyDataBase::disconnect() {    //¶Ï¿ªÁ¬½Ó
 	if (sql)
 		mysql_close(sql);
@@ -83,58 +84,80 @@ void MyDataBase::show_table() {                                            //²é¿
 void MyDataBase::create_table(const string& table, const string& elements) {       //´´Ôì±í£¬1¡¢±íÃû   2¡¢³ÉÔ±£¬³ÉÔ±¸ñÊ½Îª     ÁÐÃû ÀàÐÍ£¬ÁÐÃû ÀàÐÍ£¬..... 
 	string str = "create table " + table + "(" + elements + ")";
 	if (mysql_query(sql, str.c_str())) {
+		cout << mysql_error(sql) << endl;
 		cout << "create table error!" << endl;
 		return;
 	}
 	cout << "create table success!" << endl;
 }
 
-vector<vector<string>> MyDataBase::selectitem(const string& table, const string& value)
+void  MyDataBase::selectitem(const string& table, const string& value)
 {
-	string str = "select " + value + " from " + table;//²éÑ¯±íµÄÊý¾Ý£¬  1¡¢±íÃû     2¡¢×Ö¶ÎÃû £¬¶à¶ÎÓÃ¶ººÅ¸ô¿ª
-
+	string str = "select "  +value  + " from " +table;//²éÑ¯±íµÄÊý¾Ý£¬  1¡¢±íÃû     2¡¢×Ö¶ÎÃû £¬¶à¶ÎÓÃ¶ººÅ¸ô¿ª
 	cout << str << endl;
 	if (mysql_query(sql, str.c_str()))
 	{
+		cout <<mysql_error(sql)<<endl;
 		cout << "select error!" << endl;
-		return {};
+		//return {};
 	}
-
-	vector<vector<string>> ret;
-	res = mysql_use_result(sql);//mysql_use_result() ³õÊ¼»¯Ò»¸öÒ»ÐÐÒ»ÐÐµØ½á¹û¼¯ºÏµÄ¼ìË÷¡£
-	while ((row = mysql_fetch_row(res)) != nullptr)
+	else
 	{
-		unsigned int i = 0;
-		vector<string> temp;
-		while (i < mysql_num_fields(res))
-			temp.push_back(row[i++]);
-		ret.push_back(temp);
+		cout << str << " success" << endl;
 	}
-	mysql_free_result(res);
-	res = nullptr;
-	return ret;
+	//vector<vector<string>> ret;
+	//res = mysql_use_result(sql);//mysql_use_result() ³õÊ¼»¯Ò»¸öÒ»ÐÐÒ»ÐÐµØ½á¹û¼¯ºÏµÄ¼ìË÷¡£
+	//while ((row = mysql_fetch_row(res)) != nullptr)
+	//{
+	//	unsigned int i = 0;
+	//	vector<string> temp;
+	//	while (i < mysql_num_fields(res))
+	//		temp.push_back(row[i++]);
+	//	ret.push_back(temp);
+	//}
+	//mysql_free_result(res);
+	//res = nullptr;
+	//return ret;
 }
 
-vector<vector<string>> MyDataBase::selectitem(const string& table, const string& value, const string& limits) {
-	string str = "select " + value + " from " + table + " where " + limits;
+vector<string> MyDataBase::select_U( const string& limits) 
+{
+	string m1 = "\"";
+	string te2 = m1 + limits + m1;
+	string str = "SELECT componment_name FROM componment_info where componment_type=" + m1+limits+m1;
 	cout << str << endl;
-	if (mysql_query(sql, str.c_str())) {
+	if (mysql_query(sql, str.c_str())) 
+	{
+		cout << mysql_error(sql) << endl;
 		cout << "select error!" << endl;
-		return {};
+		return{};
+	}
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		//cout << ret[0].c_str() << ret[1].c_str() << ret[2].c_str() << ret[3].c_str();
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
 	}
 
-	vector<vector<string>> ret;
+	/*vector<string> ret;
 	res = mysql_use_result(sql);
-	while ((row = mysql_fetch_row(res)) != nullptr) {
+	while ((row = mysql_fetch_row(res)) != nullptr) 
+	{
 		unsigned int i = 0;
-		vector<string> temp;
-		while (i < mysql_num_fields(res))
-			temp.push_back(row[i++]);
-		ret.push_back(temp);
+		ret.push_back(row[i++]);
 	}
 	mysql_free_result(res);
 	res = nullptr;
-	return ret;
+	return ret;*/
 }
 
 void MyDataBase::showres() {
@@ -236,7 +259,11 @@ void MyDataBase::delete_database(const string& database) {
 		cout << "delete database error!" << endl;
 		return;
 	}
-	cout << database << " has been deleted!" << endl;
+	else
+	{
+		cout << database << " has been deleted!" << endl;
+	}
+
 }
 
 void MyDataBase::query(const string& limits, const string& command) {
@@ -247,92 +274,30 @@ void MyDataBase::query(const string& limits, const string& command) {
 	}
 	cout << "query success!" << endl;
 }
-void MyDataBase::Process_database(const vector<vector<string>>& a, const vector<vector<string>>& b, const vector<vector<string>>& c)
+string MyDataBase::Process_database(const vector<vector<string>>& a, const vector<vector<string>>& b, const vector<vector<string>>& c, const vector<string>& end_info, const vector<vector<string>>& d, const vector<vector<string>>& e)
 {
 	MyDataBase mdb;
 	vector<vector<string>>port_v = a;
 	vector<vector<string>>constant_v = b;
 	vector<vector<string>>br_v = c;
+	string tem1, tem2, tem3, tem4, tem5;
+	tem1 = end_info[0].c_str();//Æ÷¼þÃû³Æ
+	tem2 = tem1 + "_port";
+	tem3 = tem1 + "_constant";
+	tem4 = tem1 + "_boundary_register";
+	tem5 = tem1 + "_BSDL_DATA";
 	mdb.connect("localhost", "root", "change");
-	mdb.create_database("BSDL_DATA");
-	mdb.use_database("BSDL_DATA");
-	mdb.create_table("port","port_name varchar(40),port_character varchar(40)");
-	mdb.create_table("constant", "constant_logic_name varchar(40),constant_physical_name varchar(40)");
-	mdb.create_table("boundary_register", "sign_num varchar(40),BR_type varchar(40),channel_pin varchar(40),func varchar(40),safe_num varchar(40),control_num varchar(40),invain_num varchar(40),state_num varchar(40)");
-	string temp1,temp2;
-	for (auto i = 0; i != port_v.size(); i++)
-	{
-		for (auto j = 0; j != port_v[i].size(); j++)
-		{
-			if (j != port_v[i].size() - 1)
-			{
-				string temp="";
-				size_t x = 0;
-				temp = port_v[i][j].c_str();
-				temp1 = temp;
-				x = port_v[i].size() - 1;
-				temp2 = port_v[i][x].c_str();
-				mdb.insert_port_table("port", temp1, temp2, "port_name", "port_character");
-			}
-			
-		}
-	}
-	string temp3, temp4;
-	for (auto i = 0; i != constant_v.size(); i++)
-	{
-		for (auto j = 0; j != constant_v[i].size(); j++)
-		{
-			if (j != 0)
-			{
-				string temp = "";
-				temp = constant_v[i][j].c_str();
-				temp4 = temp;
-				auto m = constant_v[i].size();
-				if (m >= 3)
-				{
-					string mmm = to_string(j);//¼Ç×¡£¡
-					string yyy = ")";
-					string xxx = "(";
-					temp3 = constant_v[i][0].c_str() + xxx + mmm + yyy;
-				}
-				else
-				{
-					temp3 = constant_v[i][0].c_str();
-				}
-				mdb.insert_port_table("constant", temp3, temp4, "constant_logic_name", "constant_physical_name");
-			}
-		}
-	}
-	for (auto i = 0; i != br_v.size(); i++)
-	{
-		auto m = br_v[i].size();
-		string temp5, temp6, temp7, temp8, temp9, temp10, temp11, temp12;
-		if (m > 6)
-		{
-			temp5 = br_v[i][0].c_str();
-			temp6 = br_v[i][1].c_str();
-			temp7 = br_v[i][2].c_str();
-			temp8 = br_v[i][3].c_str();
-			temp9 = br_v[i][4].c_str();
-			temp10 = br_v[i][5].c_str();
-			temp11 = br_v[i][6].c_str();
-			temp12 = br_v[i][7].c_str();
-			mdb.insert_BR_table("boundary_register", temp5, temp6, temp7, temp8, temp9, temp10, temp11,temp12, "sign_num ", "BR_type", "channel_pin", "func", "safe_num", "control_num", "invain_num", "state_num");
-		}
-		else
-		{
-			temp5 = br_v[i][0].c_str();
-			temp6 = br_v[i][1].c_str();
-			temp7 = br_v[i][2].c_str();
-			temp8 = br_v[i][3].c_str();
-			temp9 = br_v[i][4].c_str();
-			mdb.insert_BR_table("boundary_register", temp5, temp6, temp7, temp8, temp9, "sign_num ", "BR_type", "channel_pin", "func", "safe_num");
-		}
-
-	}
-	//mdb.query("*", "port");
-	//mdb.delete_database("BSDL_DATA");
+	mdb.create_database(tem5);
+	mdb.use_database(tem5);
+	mdb.create_table(tem2,"port_name varchar(40),port_character varchar(40)");
+	mdb.create_table(tem3, "constant_logic_name varchar(40),constant_physical_name varchar(40)");
+	mdb.create_table(tem4, "sign_num varchar(40),BR_type varchar(40),channel_pin varchar(40),func varchar(40),safe_num varchar(40),control_num varchar(40),invain_num varchar(40),state_num varchar(40)");
+	mdb.create_table("Net_info", "Net_name varchar(40),Node_name varchar(40)");
+	mdb.create_table("componment_info", "componment_name varchar(40),componment_type varchar(40)");
+	insert_info(mdb,tem2,tem3,tem4, port_v, constant_v, br_v, d, e);
+	//mdb.delete_database(tem5);
 	mdb.disconnect();
+	return tem1;
 }
 void MyDataBase::insert_vector(const vector<vector<string>>&port_v, const vector<vector<string>>& constant_info, const vector<vector<string>>& attribute_BR_info)
 {
@@ -376,4 +341,106 @@ void MyDataBase::insert_vector(const vector<vector<string>>&port_v, const vector
 		}
 		cout << endl;
 	}
+}
+void insert_info(MyDataBase mdb,const string & tem2, const string& tem3, const string& tem4,const vector<vector<string>>& port_v, const vector<vector<string>>& constant_v, const vector<vector<string>>& br_v, const vector<vector<string>>& d, const vector<vector<string>>& e)
+{
+	string temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8;
+	for (auto i = 0; i != port_v.size(); i++)
+	{
+		for (auto j = 0; j != port_v[i].size(); j++)
+		{
+			if (j != port_v[i].size() - 1)
+			{
+				string temp = "";
+				size_t x = 0;
+				temp = port_v[i][j].c_str();
+				temp1 = temp;
+				x = port_v[i].size() - 1;
+				temp2 = port_v[i][x].c_str();
+				mdb.insert_port_table(tem2, temp1, temp2, "port_name", "port_character");
+			}
+		}
+	}
+	for (auto i = 0; i != constant_v.size(); i++)
+	{
+		for (auto j = 0; j != constant_v[i].size(); j++)
+		{
+			if (j != 0)
+			{
+				string temp = "";
+				temp = constant_v[i][j].c_str();
+				temp4 = temp;
+				auto m = constant_v[i].size();
+				if (m >= 3)
+				{
+					string mmm = to_string(j);//¼Ç×¡£¡
+					string yyy = ")";
+					string xxx = "(";
+					temp3 = constant_v[i][0].c_str() + xxx + mmm + yyy;
+				}
+				else
+				{
+					temp3 = constant_v[i][0].c_str();
+				}
+				mdb.insert_port_table(tem3, temp3, temp4, "constant_logic_name", "constant_physical_name");
+			}
+		}
+	}
+	for (auto i = 0; i != br_v.size(); i++)
+	{
+		auto m = br_v[i].size();
+		string temp5, temp6, temp7, temp8, temp9, temp10, temp11, temp12;
+		if (m > 6)
+		{
+			temp5 = br_v[i][0].c_str();
+			temp6 = br_v[i][1].c_str();
+			temp7 = br_v[i][2].c_str();
+			temp8 = br_v[i][3].c_str();
+			temp9 = br_v[i][4].c_str();
+			temp10 = br_v[i][5].c_str();
+			temp11 = br_v[i][6].c_str();
+			temp12 = br_v[i][7].c_str();
+			mdb.insert_BR_table(tem4, temp5, temp6, temp7, temp8, temp9, temp10, temp11, temp12, "sign_num ", "BR_type", "channel_pin", "func", "safe_num", "control_num", "invain_num", "state_num");
+		}
+		else
+		{
+			temp5 = br_v[i][0].c_str();
+			temp6 = br_v[i][1].c_str();
+			temp7 = br_v[i][2].c_str();
+			temp8 = br_v[i][3].c_str();
+			temp9 = br_v[i][4].c_str();
+			mdb.insert_BR_table(tem4, temp5, temp6, temp7, temp8, temp9, "sign_num ", "BR_type", "channel_pin", "func", "safe_num");
+		}
+
+	}
+	for (auto i = 0; i != d.size(); i++)
+	{
+		for (auto j = 0; j != d[i].size() - 1; j++)
+		{
+			if (j != 0)
+			{
+				string temp = "";
+				temp = d[i][j].c_str();
+				temp6 = temp;
+				temp5 = d[i][0].c_str();
+				mdb.insert_port_table("Net_info", temp5, temp6, "Net_name", "Node_name");
+			}
+		}
+	}
+	for (auto i = 0; i != e.size(); i++)
+	{
+		temp7 = e[i][0].c_str();
+		temp8 = e[i][1].c_str();
+		mdb.insert_port_table("componment_info", temp7, temp8, "componment_name", "componment_type");
+	}
+}
+void MyDataBase::Process_select(const string& str1)
+{
+	MyDataBase db;
+	db.connect("localhost", "root", "change");
+	db.use_database(str1+"_BSDL_DATA");
+	vector<string>v1 = db.select_U(str1);
+	cout << v1[0].c_str() <<"   "<< v1[1].c_str()<<"   " << v1[2].c_str() <<"   "<< v1[3].c_str()<< endl;
+	//db.selectitem("net_info", "*");
+	db.disconnect();
 }

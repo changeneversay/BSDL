@@ -11,7 +11,6 @@
 //”¶ µœ÷∂‘BSDLŒƒº˛ ˝æ›∑÷¿‡“‘º∞œ‘ ævector<std::string>attribute_INSTRUCTION_OPCODE_info
 using namespace std;
 //void  readthefile();
-
 void Process_COMPONENT_CONFORMANCE(regex keyword_COMPONENT_CONFORMANCE, smatch result_COMPONENT_CONFORMANCE, string temp, vector<string>& attribute_COMPONENT_CONFORMANCE);
 void ProcessPIN_MAP(regex keyword_PIN_MAP, smatch result_PIN_MAP, string temp, vector<string>& attribute_PIN_MAP);
 void ProcessTAP(regex keyword_tap, smatch result_tap, string temp, vector<string>& attribute_tap);
@@ -64,11 +63,11 @@ void CBsdlReader::ProcessBsdlFile(string BsdlFileContent)//Ã·π©Õ‚≤øΩ”ø⁄    ≤¢∂¡»
 		string m_temp = result_constant.str();
 		ProcessConstant(m_temp);
 	}
-	/*if (regex_search(text, result_end, keyword_end))
+	if (regex_search(text, result_end, keyword_end))
 	{
 		string m_temp = result_end.str();
 		ProcessEnd(m_temp);
-	}*/
+	}
 	
 	//view_BSDL();
 }
@@ -1018,4 +1017,8 @@ vector<vector<string>>  CBsdlReader::Get_constantdata()
 vector<vector<string>>  CBsdlReader::Get_BRdata()
 {
 	return attribute_BR_info;
+}
+vector<string>  CBsdlReader::Get_Enddata()
+{
+	return end_info;
 }

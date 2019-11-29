@@ -41,6 +41,7 @@ public:
 	std::vector<std::vector<std::string>> Get_portdata();
 	std::vector<std::vector<std::string>> Get_constantdata();
 	std::vector<std::vector<std::string>> Get_BRdata();
+	std::vector<std::string> Get_Enddata();
 	virtual ~CBsdlReader() = default;
 
 };
