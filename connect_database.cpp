@@ -3,7 +3,9 @@
 #include<string>
 #include<iostream>
 #include<vector>
+#include<cctype>
 using namespace std;
+void insert_chain_info(MyDataBase db, const vector<vector<string>>& Chain_info);
 void insert_info(MyDataBase mdb, const string& tem2, const string& tem3, const string& tem4, const vector<vector<string>>& port_v, const vector<vector<string>>& constant_v, const vector<vector<string>>& br_v, const vector<vector<string>>& d, const vector<vector<string>>& e);
 void MyDataBase::disconnect() {    //断开连接
 	if (sql)
@@ -72,14 +74,6 @@ void MyDataBase::use_database(const string& database)
 
 
 
-void MyDataBase::show_table() {                                            //查看表
-	string str = "show tables";
-	if (mysql_query(sql, str.c_str())) {
-		cout << "show tables error!" << endl;
-		return;
-	}
-	showres();
-}
 
 void MyDataBase::create_table(const string& table, const string& elements) {       //创造表，1、表名   2、成员，成员格式为     列名 类型，列名 类型，..... 
 	string str = "create table " + table + "(" + elements + ")";
@@ -91,39 +85,11 @@ void MyDataBase::create_table(const string& table, const string& elements) {    
 	cout << "create table success!" << endl;
 }
 
-void  MyDataBase::selectitem(const string& table, const string& value)
-{
-	string str = "select "  +value  + " from " +table;//查询表的数据，  1、表名     2、字段名 ，多段用逗号隔开
-	cout << str << endl;
-	if (mysql_query(sql, str.c_str()))
-	{
-		cout <<mysql_error(sql)<<endl;
-		cout << "select error!" << endl;
-		//return {};
-	}
-	else
-	{
-		cout << str << " success" << endl;
-	}
-	//vector<vector<string>> ret;
-	//res = mysql_use_result(sql);//mysql_use_result() 初始化一个一行一行地结果集合的检索。
-	//while ((row = mysql_fetch_row(res)) != nullptr)
-	//{
-	//	unsigned int i = 0;
-	//	vector<string> temp;
-	//	while (i < mysql_num_fields(res))
-	//		temp.push_back(row[i++]);
-	//	ret.push_back(temp);
-	//}
-	//mysql_free_result(res);
-	//res = nullptr;
-	//return ret;
-}
 
 vector<string> MyDataBase::select_U( const string& limits) 
 {
 	string m1 = "\"";
-	string te2 = m1 + limits + m1;
+	/*string te2 = m1 + limits + m1;*/
 	string str = "SELECT componment_name FROM componment_info where componment_type=" + m1+limits+m1;
 	cout << str << endl;
 	if (mysql_query(sql, str.c_str())) 
@@ -142,37 +108,143 @@ vector<string> MyDataBase::select_U( const string& limits)
 			unsigned int i = 0;
 			ret.push_back(row[i++]);
 		}
-		//cout << ret[0].c_str() << ret[1].c_str() << ret[2].c_str() << ret[3].c_str();
 		mysql_free_result(res);
 		res = nullptr;
 		return ret;
 	}
-
-	/*vector<string> ret;
-	res = mysql_use_result(sql);
-	while ((row = mysql_fetch_row(res)) != nullptr) 
+}
+vector<string> MyDataBase::select_Utype(const string& limits)
+{
+	string m1 = "\"";
+	/*string te2 = m1 + limits + m1;*/
+	string str = "SELECT componment_type FROM componment_info where componment_name=" + m1 + limits + m1;
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str()))
 	{
-		unsigned int i = 0;
-		ret.push_back(row[i++]);
+		cout << mysql_error(sql) << endl;
+		cout << "select error!" << endl;
+		return{};
 	}
-	mysql_free_result(res);
-	res = nullptr;
-	return ret;*/
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
+	}
+}
+vector<string> MyDataBase::select_constant_io(const string& str1,const string& IOname)
+{
+	string m1 = "\"";
+	string str = "SELECT constant_physical_name FROM "+str1+"_constant where constant_logic_name=" + m1 + IOname + m1;
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str()))
+	{
+		cout << mysql_error(sql) << endl;
+		cout << "select error!" << endl;
+		return{};
+	}
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
+	}
+}
+vector<string> MyDataBase::select_componment_trans(const string& trans_name)
+{
+	string m1 = "\"";
+	string str = "SELECT componment_type FROM componment_info where componment_name=" + m1 + trans_name + m1;
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str()))
+	{
+		cout << mysql_error(sql) << endl;
+		cout << "select error!" << endl;
+		return{};
+	}
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
+	}
+}
+vector<string> MyDataBase::select_net_name(const string& Node_name)
+{
+	string m1 = "\"";
+	string str = "SELECT Net_name FROM net_info where Node_name=" + m1 + Node_name + m1;
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str()))
+	{
+		cout << mysql_error(sql) << endl;
+		cout << "select error!" << endl;
+		return{};
+	}
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
+	}
+}
+vector<string> MyDataBase::select_node_name(const string& Net_name)//第一个参数为网络名,第二个为U的TDI物理序号
+{
+	string m1 = "\"";
+	string str = "SELECT  Node_name FROM net_info where Net_name=" + m1 + Net_name + m1;
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str()))
+	{
+		cout << mysql_error(sql) << endl;
+		cout << "select error!" << endl;
+		return{};
+	}
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
+	}
 }
 
-void MyDataBase::showres() {
-	res = mysql_use_result(sql);
-	cout << "****************The result is:****************" << endl;
-	while ((row = mysql_fetch_row(res)) != nullptr) {
-		unsigned int i = 0;
-		while (i < mysql_num_fields(res))
-			cout << row[i++] << "\t";
-		cout << endl;
-	}
-	cout << "**********************************************" << endl;
-	mysql_free_result(res);
-	res = nullptr;//展示结果
-}
 
 void MyDataBase::insert_table(const string& table, const string& value) {  //插入， 1、表名     2、数据格式   data1,data2,data3......
 	string str = "insert into " + table + " values (" + value + ")";
@@ -214,7 +286,16 @@ void MyDataBase::insert_BR_table(const string& table, const string& one, const s
 	}
 	cout << "insert success!" << endl;
 }
-
+void MyDataBase::insert_chain_table(const string& table, const string& one, const string& two, const string& three, const string& four,const string& col1, const string& col2, const string& col3, const string& col4)
+{
+	string str = "insert into " + table + "(" + col1 + "," + col2 + "," + col3 + "," + col4 + ") values (" + "\"" + one + "\"" + "," + "\"" + two + "\"" + "," + "\"" + three + "\"" + "," + "\"" + four + "\""  + ")";
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str())) {
+		cout << "insert error!" << endl;
+		return;
+	}
+	cout << "insert success!" << endl;
+}
 
 void MyDataBase::delete_table(const string& table, const string& value) {
 	string str = "delete from " + table + " where " + value;
@@ -253,9 +334,11 @@ void MyDataBase::Alter_table(const string& table, const string& op, const string
 	}
 	cout << "modify success!" << endl;
 }
-void MyDataBase::delete_database(const string& database) {
-	string str = "drop database " + database;
-	if (mysql_query(sql, str.c_str())) {
+void MyDataBase::delete_database(const string& database) 
+{
+    string str = "drop database if exists " + database;
+	if (mysql_query(sql, str.c_str()))
+	{
 		cout << "delete database error!" << endl;
 		return;
 	}
@@ -287,6 +370,7 @@ string MyDataBase::Process_database(const vector<vector<string>>& a, const vecto
 	tem4 = tem1 + "_boundary_register";
 	tem5 = tem1 + "_BSDL_DATA";
 	mdb.connect("localhost", "root", "change");
+	mdb.delete_database(tem5);
 	mdb.create_database(tem5);
 	mdb.use_database(tem5);
 	mdb.create_table(tem2,"port_name varchar(40),port_character varchar(40)");
@@ -295,7 +379,7 @@ string MyDataBase::Process_database(const vector<vector<string>>& a, const vecto
 	mdb.create_table("Net_info", "Net_name varchar(40),Node_name varchar(40)");
 	mdb.create_table("componment_info", "componment_name varchar(40),componment_type varchar(40)");
 	insert_info(mdb,tem2,tem3,tem4, port_v, constant_v, br_v, d, e);
-	//mdb.delete_database(tem5);
+	
 	mdb.disconnect();
 	return tem1;
 }
@@ -439,8 +523,321 @@ void MyDataBase::Process_select(const string& str1)
 	MyDataBase db;
 	db.connect("localhost", "root", "change");
 	db.use_database(str1+"_BSDL_DATA");
-	vector<string>v1 = db.select_U(str1);
-	cout << v1[0].c_str() <<"   "<< v1[1].c_str()<<"   " << v1[2].c_str() <<"   "<< v1[3].c_str()<< endl;
-	//db.selectitem("net_info", "*");
+	vector<vector<string>>Chain = db.Process_All_Chain(db, str1);
+	db.create_table("Chain_info", "chain_num varchar(40),chain_level varchar(40),componment_u varchar(40),componment_u_info varchar(40)");
+	insert_chain_info(db, Chain);
 	db.disconnect();
+}
+void MyDataBase::Process_Chain_road(const size_t& x,MyDataBase db,const string &str1,const string& temp_str, int chain_num, vector<string>& Mark, vector<vector<string>>& Chain_info)//单链生成
+{
+	string tempt1;
+	string center = temp_str;
+	int turn = 1;
+	int C_num = 1;
+	string c_num_str = to_string(C_num);
+	string next_u = center;
+	vector<string>Chain_name;
+	string num = to_string(chain_num);
+	string chain_num_str = "chain" + num;
+	Chain_TDO = db.select_constant_io(str1, "TDO");
+	Chain_TDI = db.select_constant_io(str1, "TDI");
+	for (auto i = 0; i != x; ++i)
+	{
+		string q = "-";
+		bool pick = 0;
+		for (auto v = 0; v != Mark.size(); ++v)
+		{
+			if (next_u == Mark[v])
+			{
+				pick = 1;
+			}
+		}
+		if (pick != 1)
+		{
+			bool Mark_insert = 0;
+			Chain_name.push_back(c_num_str);//保存序号
+			++C_num;
+			c_num_str = to_string(C_num);
+			Chain_name.push_back(chain_num_str);//保存链名
+			Chain_name.push_back(next_u);//保存链的元件名
+			Chain_name.push_back(str1);//保存一条链的BSDL信息
+			Chain_info.push_back(Chain_name);
+			Chain_name.clear();
+			tempt1 = next_u + q + Chain_TDO[0];//TDO的物理管脚序号
+			for (auto h : Mark)
+			{
+				if (next_u == h)
+				{
+					Mark_insert = 1;
+				}
+			}
+			if (Mark_insert != 1)
+			{
+				Mark.push_back(next_u);//标记
+			}
+			vector<string>net_name = db.select_net_name(tempt1);//存TDO所在网络名
+			vector<string>node_name = db.select_node_name(net_name[0].c_str());//存TDO所连器件的管教名
+			cout << node_name[0].c_str() << "     " << node_name[1].c_str() << endl;
+			if (node_name.size() != 1)
+			{
+				for (auto it = node_name.begin(); it != node_name.end(); ++it)//node_name保留与TDO所连管脚名
+				{
+					if (*it == tempt1)
+					{
+						it = node_name.erase(it);
+						break;
+					}
+				}
+			}
+			string dev1 = node_name[0].c_str();
+			dev1.erase(dev1.begin() + 2, dev1.end());//所连管脚的所属器件名
+			cout << dev1 << "****" << endl;
+			vector<string>trans_type = db.select_componment_trans(dev1);//所连器件的属性
+			cout << trans_type[0].c_str() << "######" << endl;
+			if (trans_type[0] == "HEADER 8X2")
+			{
+				string temp_str = node_name[0].c_str();
+				temp_str.erase(0, 3);
+				int m = stoi(temp_str);
+				cout << m << "&&&&" << endl;
+				int t = m + 1;
+				string f = to_string(t);
+				string trans_next_node = dev1 + "-" + f;//透明元件的另一边管脚名
+				cout << trans_next_node << endl;
+				vector<string>net_name_next = db.select_net_name(trans_next_node);//寻找透明管脚所在网络名,仅一个元素
+				vector<string>node_name_next = db.select_node_name(net_name_next[0]);//存下所在网络的两个元素(管教名)
+				if (node_name_next.size() != 1)
+				{
+					for (auto it = node_name_next.begin(); it != node_name_next.end(); ++it)//node_name保留与TDO所连管脚名
+					{
+						if (*it == trans_next_node)
+						{
+							it = node_name_next.erase(it);
+							break;
+						}
+					}
+				}
+				string next_node = node_name_next[0];
+				next_node.erase(next_node.begin() + 2, next_node.end());
+				vector<string>depend = db.select_Utype(next_node);//判断与透明原件相连的器件信息是否为BSD芯片
+				bool sign = 0;
+				string str2 = str1;
+				for (auto& c : str2)//小写转化大写
+				{
+					c = toupper(c);
+				}
+				if (depend[0] == str2)
+				{
+					for (auto v = 0; v != Mark.size(); ++v)
+					{
+						if (next_node == Mark[v])
+						{
+							sign = 1;
+						}
+					}
+					if (sign != 1)
+					{
+						string nk = next_node + q + db.select_constant_io(str1, "TDI")[0];
+						if (nk == node_name_next[0])
+						{
+							next_u = next_node;
+							continue;
+						}
+					}
+				}
+				else
+				{
+					break;//透明原件所连不为BSD芯片时,跳出循环返回中心器件,从TDI开始寻找
+				}
+			}
+			else if (trans_type[0] == str1)
+			{
+				string nk = dev1 + q + db.select_constant_io(str1, "TDI")[0];
+				if (nk == node_name[0])
+				{
+					next_u = dev1;
+					continue;
+				}
+
+			}
+			else
+			{
+				break;
+				//TDO所连非U非TRANS
+			}
+		}
+		else
+		{
+			break;
+		}
+
+	}
+	if (Mark.size() != x)
+	{
+		next_u = center;
+		for (auto i = 0; i != x; ++i)
+		{
+			bool pick = 0;
+			for (auto v = 0; v != Mark.size(); ++v)
+			{
+				if ((next_u == Mark[v])&&(next_u != center))
+				{
+					pick = 1;
+				}
+			}
+			if (pick != 1)
+			{
+				if (next_u != center)
+				{
+					Chain_name.push_back(c_num_str);//保存序号
+					++C_num;
+					c_num_str = to_string(C_num);
+					Chain_name.push_back(chain_num_str);//保存链名
+					Chain_name.push_back(next_u);//保存链的元件名
+					Chain_name.push_back(str1);//保存一条链的BSDL信息
+					Chain_info.push_back(Chain_name);
+					Chain_name.clear();
+				}
+				string q = "-";
+				tempt1 = next_u + q + Chain_TDI[0];//TDI的物理管脚序号
+				Mark.push_back(next_u);//标记
+				vector<string>net_name = db.select_net_name(tempt1);//存TDI所在网络名
+				vector<string>node_name = db.select_node_name(net_name[0].c_str());//存TDI所连器件的管教名
+				cout << node_name[0].c_str() << "     " << node_name[1].c_str() << endl;
+				if (node_name.size() != 1)
+				{
+					for (auto it = node_name.begin(); it != node_name.end(); ++it)//node_name保留与TDI所连管脚名
+					{
+						if (*it == tempt1)
+						{
+							it = node_name.erase(it);
+							break;
+						}
+					}
+				}
+				string dev1 = node_name[0].c_str();
+				dev1.erase(dev1.begin() + 2, dev1.end());//所连管脚的所属器件名
+				cout << dev1 << "****" << endl;
+				vector<string>trans_type = db.select_componment_trans(dev1);//所连器件的属性
+				cout << trans_type[0].c_str() << "######" << endl;
+				if (trans_type[0] == "HEADER 8X2")
+				{
+					string temp_str = node_name[0].c_str();
+					temp_str.erase(0, 3);
+					int m = stoi(temp_str);
+					cout << m << "&&&&" << endl;
+					int t = m + 1;
+					string f = to_string(t);
+					string trans_next_node = dev1 + "-" + f;//透明元件的另一边管脚名
+					cout << trans_next_node << endl;
+					vector<string>net_name_next = db.select_net_name(trans_next_node);//寻找透明管脚所在网络名,仅一个元素
+					vector<string>node_name_next = db.select_node_name(net_name_next[0]);//存下所在网络的两个元素(管教名)
+					if (node_name_next.size() != 1)
+					{
+						for (auto it = node_name_next.begin(); it != node_name_next.end(); ++it)//node_name保留与TDI所连管脚名
+						{
+							if (*it == trans_next_node)
+							{
+								it = node_name_next.erase(it);
+								break;
+							}
+						}
+					}
+					string next_node = node_name_next[0];
+					next_node.erase(next_node.begin() + 2, next_node.end());
+					vector<string>depend = db.select_Utype(next_node);//判断与透明原件相连的器件信息是否为BSDL芯片
+					bool sign = 0;
+					string str2 = str1;
+					for (auto& c : str2)//小写转化大写
+					{
+						c = toupper(c);
+					}
+					if (depend[0] == str2)
+					{
+						for (auto v = 0; v != Mark.size(); ++v)
+						{
+							if (next_node == Mark[v])
+							{
+								sign = 1;
+							}
+						}
+						if (sign != 1)
+						{
+							string nk = next_node + q + db.select_constant_io(str1, "TDO")[0];
+							if (nk == node_name_next[0])
+							{
+								turn = 1;
+								next_u = next_node;
+								continue;
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+					else
+					{
+						break;//透明原件所连不为BSD芯片时
+					}
+				}
+				else if (trans_type[0] == str1)
+				{
+					string nk = dev1 + q + db.select_constant_io(str1, "TDO")[0];
+					if (nk == node_name[0])
+					{
+						next_u = dev1;
+						continue;
+					}
+				}
+				else
+				{
+					break;//TDO所连非U非TRANS,此链路结束
+				}
+			}
+		}
+	}
+}
+vector<vector<string>>  MyDataBase::Process_All_Chain(MyDataBase db, const string& str1)
+{
+	bool decide = 0;
+	int chain_num = 1;
+	Chain_U = db.select_U(str1);//显示为U1 U2
+	auto x = Chain_U.size();
+	for (auto k = 0; k != Chain_U.size(); ++k)
+	{
+		for (auto v = 0; v != Mark.size(); ++v)
+		{
+			if (Chain_U[k]== Mark[v])
+			{
+				decide = 1;
+			}
+		}
+		if (decide != 1)
+		{
+			string temp_str = Chain_U[k];
+			db.Process_Chain_road(x,db, str1, temp_str, chain_num,Mark, Chain_info);
+			chain_num++;
+		}
+	}
+	for (auto a : Chain_info)
+	{
+		cout << a[0] << endl;
+		cout << a[1] << endl;
+		cout << a[2] << endl;
+		cout << a[3] << endl;
+	}
+	return Chain_info;
+}
+void insert_chain_info(MyDataBase db,const vector<vector<string>>& Chain_info)
+{
+	for (auto i = 0; i != Chain_info.size(); i++)
+	{
+		string tem1, tem2,tem3,tem4;
+		tem1 = Chain_info[i][0];
+		tem2 = Chain_info[i][1];
+		tem3 = Chain_info[i][2];
+		tem4 = Chain_info[i][3];
+		db.insert_chain_table("Chain_info", tem1, tem2, tem3, tem4, "chain_num", "chain_level", "componment_u", "componment_u_info");
+	}
 }
