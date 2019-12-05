@@ -15,7 +15,11 @@ private:
 	MYSQL_RES* res = nullptr;
 	MYSQL_ROW row = nullptr;
 	bool connect_flag;
-	void showres();
+	vector<string>Chain_U;
+	vector<string>Chain_TDO;
+	vector<string>Chain_TDI;
+	vector<string>Mark;
+	vector<vector<string>>Chain_info;
 public:
 	MyDataBase();
 	MyDataBase(MYSQL* mysql);
@@ -27,10 +31,13 @@ public:
 	void create_database(const string& database);
 	void use_database(const string& database);
 	void delete_database(const string& database);
-	void show_table();
 	void create_table(const string& table, const string& elements);
-	void selectitem(const string& table, const string& value);
 	vector<string> select_U(const string& limits);
+	vector<string> select_constant_io(const string& str1, const string& IOname);
+	vector<string> select_net_name(const string& Node_name);
+	vector<string> select_node_name(const string& Net_name);
+	vector<string> select_Utype(const string& limits);
+	vector<string> select_componment_trans(const string& trans_name);
 	void insert_table(const string& table, const string& value);
 	void insert_port_table(const string& table, const string& one, const string& two, const string& col1,const string& col2);
 	void delete_table(const string& table, const string& value);
@@ -42,5 +49,9 @@ public:
 	void insert_vector(const vector<vector<string>>& port_v, const vector<vector<string>>& constant_info, const vector<vector<string>>& attribute_BR_info);
 	void insert_BR_table(const string& table, const string& one, const string& two, const string& three, const string& four, const string& five, const string& six, const string& seven, const string& eight, const string& col1, const string& col2, const string& col3, const string& col4, const string& col5, const string& col6, const string& col7, const string& col8);
 	void insert_BR_table(const string& table, const string& one, const string& two, const string& three, const string& four, const string& five, const string& col1, const string& col2, const string& col3, const string& col4, const string& col5);
+	void insert_chain_table(const string& table, const string& one, const string& two, const string& three, const string& four, const string& col1, const string& col2, const string& col3, const string& col4);
 	void Process_select(const string& str1);
+	void Process_Chain_road(const size_t& x,MyDataBase db, const string& str1, const string& temp_str, int chain_num,vector<string>& Mark, vector<vector<string>>& Chain_info);
+	vector<vector<string>> Process_All_Chain(MyDataBase db, const string& str1);
+	
 };
