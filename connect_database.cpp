@@ -1,10 +1,12 @@
-#include "connect_database.h"
+#include "connect_database.h"/*½«½âÎöBSDLÎÄ¼şÓëÍø±í·ÖÀà´æÈëÊı¾İ¿â,Éú³É²âÊÔÁ´Â·²¢·µ»Ø¿É²âĞÔÍøÂç*/
 #include"cbsdlreader.h"
 #include<string>
 #include<iostream>
 #include<vector>
 #include<cctype>
 using namespace std;
+void insert_ChainNet_info(MyDataBase db, const vector<vector<string>>& Net_inout, const vector<vector<string>>& Net_inout_Hang);
+void inNet_outNet(MyDataBase db, const vector<string>& Out_node, const vector<string>& In_node, const vector<vector<string>>& chain_info, vector<vector<string>>& Net_inout, vector<vector<string>>& Net_out_Hang, vector<vector<string>>& Net_Out_Unkown);
 void insert_chain_info(MyDataBase db, const vector<vector<string>>& Chain_info);
 void insert_info(MyDataBase mdb, const string& tem2, const string& tem3, const string& tem4, const vector<vector<string>>& port_v, const vector<vector<string>>& constant_v, const vector<vector<string>>& br_v, const vector<vector<string>>& d, const vector<vector<string>>& e);
 void MyDataBase::disconnect() {    //¶Ï¿ªÁ¬½Ó
@@ -38,9 +40,10 @@ MyDataBase::~MyDataBase() {
 	res = nullptr;
 }
 
-void MyDataBase::connect(const string& host, const string& user, const string& password, const string& database,
-	unsigned int port, const char* unix_socket, unsigned long client_flag) {
-	if (!sql) {
+void MyDataBase::connect(const string& host, const string& user, const string& password, const string& database,unsigned int port, const char* unix_socket, unsigned long client_flag) 
+{
+	if (!sql) 
+	{
 		cout << "sql has not been initialized!" << endl;          //ÅĞ¶ÏÊÇ·ñ³õÊ¼»¯
 		return;
 	}
@@ -72,9 +75,6 @@ void MyDataBase::use_database(const string& database)
 	cout << "use " << database << " now!" << endl;
 }
 
-
-
-
 void MyDataBase::create_table(const string& table, const string& elements) {       //´´Ôì±í£¬1¡¢±íÃû   2¡¢³ÉÔ±£¬³ÉÔ±¸ñÊ½Îª     ÁĞÃû ÀàĞÍ£¬ÁĞÃû ÀàĞÍ£¬..... 
 	string str = "create table " + table + "(" + elements + ")";
 	if (mysql_query(sql, str.c_str())) {
@@ -84,7 +84,6 @@ void MyDataBase::create_table(const string& table, const string& elements) {    
 	}
 	cout << "create table success!" << endl;
 }
-
 
 vector<string> MyDataBase::select_U( const string& limits) 
 {
@@ -144,6 +143,32 @@ vector<string> MyDataBase::select_constant_io(const string& str1,const string& I
 {
 	string m1 = "\"";
 	string str = "SELECT constant_physical_name FROM "+str1+"_constant where constant_logic_name=" + m1 + IOname + m1;
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str()))
+	{
+		cout << mysql_error(sql) << endl;
+		cout << "select error!" << endl;
+		return{};
+	}
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
+	}
+}
+vector<string> MyDataBase::select_constant_logic_name(const string& str1, const string& IOname)
+{
+	string m1 = "\"";
+	string str = "SELECT constant_logic_name FROM " + str1 + "_constant where constant_physical_name=" + m1 + IOname + m1;
 	cout << str << endl;
 	if (mysql_query(sql, str.c_str()))
 	{
@@ -244,8 +269,32 @@ vector<string> MyDataBase::select_node_name(const string& Net_name)//µÚÒ»¸ö²ÎÊıÎ
 		return ret;
 	}
 }
-
-
+vector<string> MyDataBase::select_Chain_U(const string& limits1,const string& limits2)//ĞòºÅ,Á´Â·ĞòºÅ
+{
+	string m1 = "\"";
+	string str = "SELECT componment_u FROM chain_info where chain_num=" + m1 + limits1 + m1 +" and chain_level="+m1+ limits2 + m1;
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str()))
+	{
+		cout << mysql_error(sql) << endl;
+		cout << "select error!" << endl;
+		return{};
+	}
+	else
+	{
+		cout << str << " success" << endl;
+		vector<string> ret;
+		res = mysql_use_result(sql);
+		while ((row = mysql_fetch_row(res)) != nullptr)
+		{
+			unsigned int i = 0;
+			ret.push_back(row[i++]);
+		}
+		mysql_free_result(res);
+		res = nullptr;
+		return ret;
+	}
+}
 void MyDataBase::insert_table(const string& table, const string& value) {  //²åÈë£¬ 1¡¢±íÃû     2¡¢Êı¾İ¸ñÊ½   data1,data2,data3......
 	string str = "insert into " + table + " values (" + value + ")";
 
@@ -255,10 +304,19 @@ void MyDataBase::insert_table(const string& table, const string& value) {  //²åÈ
 	}
 	cout << "insert success!" << endl;
 }
-
 void MyDataBase::insert_port_table(const string& table, const string& one,const string& two, const string& col1,const string& col2 ) 
 {
 	string str = "insert into " + table + "(" + col1 +","+col2 + ") values (" +"\""+ one +"\""+","+"\""+ two +"\""+ ")";
+	cout << str << endl;
+	if (mysql_query(sql, str.c_str())) {
+		cout << "insert error!" << endl;
+		return;
+	}
+	cout << "insert success!" << endl;
+}
+void MyDataBase::insert_Hang_table(const string& table, const string& one, const string& col1)
+{
+	string str = "insert into " + table + "(" + col1 + ") values (" + "\"" + one + "\"" +  ")";
 	cout << str << endl;
 	if (mysql_query(sql, str.c_str())) {
 		cout << "insert error!" << endl;
@@ -296,7 +354,6 @@ void MyDataBase::insert_chain_table(const string& table, const string& one, cons
 	}
 	cout << "insert success!" << endl;
 }
-
 void MyDataBase::delete_table(const string& table, const string& value) {
 	string str = "delete from " + table + " where " + value;
 	cout << str << endl;
@@ -518,7 +575,7 @@ void insert_info(MyDataBase mdb,const string & tem2, const string& tem3, const s
 		mdb.insert_port_table("componment_info", temp7, temp8, "componment_name", "componment_type");
 	}
 }
-void MyDataBase::Process_select(const string& str1)
+void MyDataBase::Process_Chain(const string& str1)
 {
 	MyDataBase db;
 	db.connect("localhost", "root", "change");
@@ -526,6 +583,15 @@ void MyDataBase::Process_select(const string& str1)
 	vector<vector<string>>Chain = db.Process_All_Chain(db, str1);
 	db.create_table("Chain_info", "chain_num varchar(40),chain_level varchar(40),componment_u varchar(40),componment_u_info varchar(40)");
 	insert_chain_info(db, Chain);
+	vector<string>V1 = Out_node;
+	vector<string>V2 = In_node;
+	vector<vector<string>>V3 = Chain;
+	inNet_outNet(db, V1, V2, V3, Net_inout, Net_out_Hang, Net_Out_Unkown);
+	db.create_table("NET_inout", "Out_Net varchar(40),In_Net varchar(40)");
+	db.create_table("NET_Hang_out", "Net varchar(40)");//Ğü¿ÕOUT
+	db.create_table("NET_Hang_in", "Net varchar(40)"); //Ğü¿ÕIN
+	db.create_table("NET_Unkown", "Net varchar(40)");//Î´ÖªÒı½Å,ÎŞ·¨¼ì²â
+	insert_ChainNet_info(db, Net_inout, Net_out_Hang);
 	db.disconnect();
 }
 void MyDataBase::Process_Chain_road(const size_t& x,MyDataBase db,const string &str1,const string& temp_str, int chain_num, vector<string>& Mark, vector<vector<string>>& Chain_info)//µ¥Á´Éú³É
@@ -599,9 +665,18 @@ void MyDataBase::Process_Chain_road(const size_t& x,MyDataBase db,const string &
 				string temp_str = node_name[0].c_str();
 				temp_str.erase(0, 3);
 				int m = stoi(temp_str);
+				string f;
 				cout << m << "&&&&" << endl;
-				int t = m + 1;
-				string f = to_string(t);
+				if (m % 2 == 1)//ÈôÎªÆæ
+				{
+					int t = m + 1;
+					f = to_string(t);
+				}
+				else//ÈôÎªÅ¼
+				{
+					int t = m - 1;
+					f = to_string(t);
+				}
 				string trans_next_node = dev1 + "-" + f;//Í¸Ã÷Ôª¼şµÄÁíÒ»±ß¹Ü½ÅÃû
 				cout << trans_next_node << endl;
 				vector<string>net_name_next = db.select_net_name(trans_next_node);//Ñ°ÕÒÍ¸Ã÷¹Ü½ÅËùÔÚÍøÂçÃû,½öÒ»¸öÔªËØ
@@ -658,7 +733,10 @@ void MyDataBase::Process_Chain_road(const size_t& x,MyDataBase db,const string &
 					next_u = dev1;
 					continue;
 				}
-
+				else
+				{
+					break;//ËùÁ¬ÎªUµÄ·ÇTDI¹Ü½Å,¸Ã·½ÏòÁ´Â·½áÊø,·µ»ØÖĞĞÄÆ÷¼şÁíÒ»·½ÏòÉú³ÉÁ´Â·
+				}
 			}
 			else
 			{
@@ -668,14 +746,14 @@ void MyDataBase::Process_Chain_road(const size_t& x,MyDataBase db,const string &
 		}
 		else
 		{
-			break;
+			break;//PICK = 1,¸ÃUÒÑ±»±ê¼Ç
 		}
 
 	}
 	if (Mark.size() != x)
 	{
 		next_u = center;
-		for (auto i = 0; i != x; ++i)
+		for (auto i = Mark.size() - 1; i != x; ++i)
 		{
 			bool pick = 0;
 			for (auto v = 0; v != Mark.size(); ++v)
@@ -725,9 +803,18 @@ void MyDataBase::Process_Chain_road(const size_t& x,MyDataBase db,const string &
 					string temp_str = node_name[0].c_str();
 					temp_str.erase(0, 3);
 					int m = stoi(temp_str);
+					string f;
 					cout << m << "&&&&" << endl;
-					int t = m + 1;
-					string f = to_string(t);
+					if (m % 2 == 1)//ÈôÎªÆæ
+					{
+						int t = m + 1;
+						f = to_string(t);
+					}
+					else//ÈôÎªÅ¼
+					{
+						int t = m - 1;
+						f = to_string(t);
+					}
 					string trans_next_node = dev1 + "-" + f;//Í¸Ã÷Ôª¼şµÄÁíÒ»±ß¹Ü½ÅÃû
 					cout << trans_next_node << endl;
 					vector<string>net_name_next = db.select_net_name(trans_next_node);//Ñ°ÕÒÍ¸Ã÷¹Ü½ÅËùÔÚÍøÂçÃû,½öÒ»¸öÔªËØ
@@ -840,4 +927,182 @@ void insert_chain_info(MyDataBase db,const vector<vector<string>>& Chain_info)
 		tem4 = Chain_info[i][3];
 		db.insert_chain_table("Chain_info", tem1, tem2, tem3, tem4, "chain_num", "chain_level", "componment_u", "componment_u_info");
 	}
+}
+void inNet_outNet(MyDataBase db,const vector<string>& Out_node, const vector<string>& In_node,const vector<vector<string>>& chain_info,vector<vector<string>>& Net_inout, vector<vector<string>>& Net_out_Hang, vector<vector<string>>&Net_Out_Unkown)//Õâ¸öchain_u½ö½öÖ»ÓĞÒ»¸öÔªËØ
+{
+	bool deci = 0;
+	for (auto v = 0; v != chain_info.size(); ++v)
+	{
+		if (deci != 1)
+		{
+			for (auto j = 0; j != Out_node.size(); ++j)
+			{
+				vector<string>comp = db.select_Chain_U(chain_info[v][0], chain_info[v][1]);
+				vector<string>node = db.select_constant_io(chain_info[v][3], Out_node[j]);
+				string m = "-";
+				string chain_pin = comp[0] + m + node[0];
+				vector<string>net_name = db.select_net_name(chain_pin);//Ñ°ÕÒ¹Ü½ÅËùÔÚÍøÂçÃû,½öÒ»¸öÔªËØ
+				vector<string>node_name = db.select_node_name(net_name[0]);//´æÏÂËùÔÚÍøÂçµÄÁ½¸öÔªËØ(¹Ü½ÌÃû)»òÒ»¸öÔªËØ(²»¿¼ÂÇÈı¸öÔªËØÇé¿ö)
+			
+				string str4 = chain_info[v][3];
+				for (auto& c : str4)//Ğ¡Ğ´×ª»¯´óĞ´
+				{
+					c = toupper(c);
+				}
+
+				if (node_name.size() != 1)//²»ÎªĞü¿Õ½Å
+				{
+					for (auto it = node_name.begin(); it != node_name.end(); ++it)//node_name±£ÁôËùÁ¬¹Ü½ÅÃû
+					{
+						if (*it == chain_pin)
+						{
+							it = node_name.erase(it);//±£ÁôÏÂÒ»Æ÷¼şÒı½Å
+							break;
+						}
+					}
+					string dev1 = node_name[0].c_str();//ËùÁ¬¹Ü½ÅÃû
+					dev1.erase(dev1.begin() + 2, dev1.end());//ËùÁ¬¹Ü½ÅµÄËùÊôÆ÷¼şÃû
+					cout << dev1 << "****" << endl;
+					vector<string>trans_type = db.select_componment_trans(dev1);//ËùÁ¬Æ÷¼şµÄÊôĞÔ ¾ùÎª´óĞ´   header\U\DAC
+					cout << trans_type[0].c_str() << "######" << endl;
+					if (trans_type[0] == "HEADER 8X2")
+					{
+						string temp_str = node_name[0].c_str();
+						temp_str.erase(0, 3);
+						int m = stoi(temp_str);
+						string f;
+						cout << m << "&&&&" << endl;
+						if (m % 2 == 1)//ÈôÎªÆæ
+						{
+							int t = m + 1;
+							f = to_string(t);
+						}
+						else//ÈôÎªÅ¼
+						{
+							int t = m - 1;
+							f = to_string(t);
+						}
+						string trans_next_node = dev1 + "-" + f;//Í¸Ã÷Ôª¼şµÄÁíÒ»±ß¹Ü½ÅÃû
+						cout << trans_next_node << endl;
+						vector<string>net_name_next = db.select_net_name(trans_next_node);//Ñ°ÕÒÍ¸Ã÷¹Ü½ÅÁíÒ»±ßËùÔÚÍøÂçÃû,½öÒ»¸öÔªËØ
+						vector<string>node_name_next = db.select_node_name(net_name_next[0]);//´æÏÂËùÔÚÍøÂçµÄÁ½¸öÔªËØ(¹Ü½ÌÃû)
+						if (node_name_next.size() != 1)
+						{
+							for (auto it = node_name_next.begin(); it != node_name_next.end(); ++it)//node_name±£ÁôÓëTDIËùÁ¬¹Ü½ÅÃû
+							{
+								if (*it == trans_next_node)
+								{
+									it = node_name_next.erase(it);
+									break;
+								}
+							}
+						}
+						string next_node = node_name_next[0];//node_name_nextÎª¹Ü½ÌÃû
+						string N_tem = next_node;
+						vector<string> Net_in = db.select_net_name(node_name_next[0]);
+						next_node.erase(next_node.begin() + 2, next_node.end());
+						vector<string>depend = db.select_Utype(next_node);//ÅĞ¶ÏÓëÍ¸Ã÷Ô­¼şÏàÁ¬µÄÆ÷¼şĞÅÏ¢ÊÇ·ñÎªBSDLĞ¾Æ¬
+						bool sign = 0;
+						string str2 = chain_info[v][3];
+						for (auto& c : str2)//Ğ¡Ğ´×ª»¯´óĞ´
+						{
+							c = toupper(c);
+						}
+						if (depend[0] == str2)
+						{
+							string next_node_num = N_tem.erase(0, 3);
+							vector<string>logic_name = db.select_constant_logic_name(chain_info[v][3], next_node_num);
+							bool tem = 0;
+							for (auto x : In_node)
+							{
+								if (logic_name[0] == x)
+								{
+									tem = 1;
+								}
+							}
+							if (tem == 1)//Í¸Ã÷Ôª¼ş½ÓµÄUµÄin½Å
+							{ 
+								string gr = Net_in[0];
+								net_name.push_back(gr);
+								Net_inout.push_back(net_name);
+							}
+							else//Í¸Ã÷Ô­¼ş¿ÉÄÜ½Ó·´ÁËU,Î´½ÓÈëin½Å
+							{
+								cout << "Wrong!Not connect with U_In bit,please check the circuit board" << endl;
+								deci = 1;
+								break;
+							}
+						}
+						else
+						{
+							cout << "wrong ,too many transparent original" << endl;
+							deci = 1;
+							break;
+						}
+					}
+					else if (trans_type[0] == str4)//OUT_NODEÖ±Á¬IN_NODE
+					{
+						string str5 = node_name[0];
+						string next_node_num = str5.erase(0, 3);
+						vector<string>logic_name = db.select_constant_logic_name(chain_info[v][3], next_node_num);
+						bool tem = 0;
+						for (auto x : In_node)
+						{
+							if (logic_name[0] == x)
+							{
+								tem = 1;
+							}
+						}
+						if (tem == 1)//Í¸Ã÷Ôª¼ş½ÓµÄUµÄin½Å
+						{
+							string gr = net_name[0];
+							net_name.push_back(gr);
+							Net_inout.push_back(net_name);
+						}
+						else//Í¸Ã÷Ô­¼ş¿ÉÄÜ½Ó·´ÁËU,Î´½ÓÈëin½Å
+						{
+							cout << "Wrong!Not connect with U_In bit,please check the circuit board" << endl;
+							deci = 1;
+							break;
+						}
+					}
+					//else if()//Á¬ADC/DAC
+					//{
+
+					//}
+					else//´ËÊ±Out_nodeÁ¬½ÓµÄÊÇÄªÃûÆäÃîµÄÆ÷¼ş,µ±Ğü¿Õ½Å´¦Àí
+					{
+					   Net_Out_Unkown.push_back(net_name);
+					}
+				}
+				else//´ËÊ±¹Ü½ÅÎªĞü¿ÕÌ¬
+				{
+				     Net_out_Hang.push_back(net_name);
+				}
+			}
+		}
+		else
+		{
+		    cout << "Fail to Get right Net" << endl;
+		    break;
+        }
+	}
+	
+}
+void insert_ChainNet_info(MyDataBase db, const vector<vector<string>>& Net_inout,const vector<vector<string>>& Net_out_Hang)
+{
+	for (auto i = 0; i != Net_inout.size(); i++)
+	{
+		string tem1, tem2;
+		tem1 = Net_inout[i][0];
+		tem2 = Net_inout[i][1];
+		db.insert_port_table("NET_inout", tem1, tem2, "Out_Net", "In_Net");
+	}
+	for (auto i = 0; i != Net_out_Hang.size(); i++)
+	{
+		string tem1;
+		tem1 = Net_out_Hang[i][0];
+		db.insert_Hang_table("NET_Hang_inout", tem1, "NET_Hang_out");
+	}
+
 }
