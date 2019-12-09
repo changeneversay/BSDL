@@ -5,8 +5,9 @@
 #include<vector>
 #include<cctype>
 using namespace std;
-void insert_ChainNet_info(MyDataBase db, const vector<vector<string>>& Net_inout, const vector<vector<string>>& Net_inout_Hang);
-void inNet_outNet(MyDataBase db, const vector<string>& Out_node, const vector<string>& In_node, const vector<vector<string>>& chain_info, vector<vector<string>>& Net_inout, vector<vector<string>>& Net_out_Hang, vector<vector<string>>& Net_Out_Unkown);
+void insert_ChainNet_info(MyDataBase db, const vector<vector<string>>& Net_inout, const vector<vector<string>>& Net_inout_Hang, const vector<vector<string>>& Net_Out_Unkown, const vector<vector<string>>& Net_in_hang, const vector<vector<string>>& Net_In_Unkown);
+void inNet(MyDataBase db, const vector<string>& Out_node, const vector<string>& In_node, const vector<vector<string>>& chain_info, const vector<vector<string>>& Net_inout, vector<vector<string>>& Net_in_Hang, vector<vector<string>>& Net_In_Unkown);//这个chain_u仅仅只有一个元素
+void outNet(MyDataBase db, const vector<string>& Out_node, const vector<string>& In_node, const vector<vector<string>>& chain_info, vector<vector<string>>& Net_inout, vector<vector<string>>& Net_out_Hang, vector<vector<string>>& Net_Out_Unkown);
 void insert_chain_info(MyDataBase db, const vector<vector<string>>& Chain_info);
 void insert_info(MyDataBase mdb, const string& tem2, const string& tem3, const string& tem4, const vector<vector<string>>& port_v, const vector<vector<string>>& constant_v, const vector<vector<string>>& br_v, const vector<vector<string>>& d, const vector<vector<string>>& e);
 void MyDataBase::disconnect() {    //断开连接
@@ -586,12 +587,14 @@ void MyDataBase::Process_Chain(const string& str1)
 	vector<string>V1 = Out_node;
 	vector<string>V2 = In_node;
 	vector<vector<string>>V3 = Chain;
-	inNet_outNet(db, V1, V2, V3, Net_inout, Net_out_Hang, Net_Out_Unkown);
-	db.create_table("NET_inout", "Out_Net varchar(40),In_Net varchar(40)");
-	db.create_table("NET_Hang_out", "Net varchar(40)");//悬空OUT
-	db.create_table("NET_Hang_in", "Net varchar(40)"); //悬空IN
-	db.create_table("NET_Unkown", "Net varchar(40)");//未知引脚,无法检测
-	insert_ChainNet_info(db, Net_inout, Net_out_Hang);
+	outNet(db, V1, V2, V3, Net_inout, Net_out_Hang, Net_Out_Unkown);
+	inNet(db, V1, V2, V3, Net_inout, Net_in_Hang, Net_In_Unkown);
+	db.create_table("T_NET_inout", "Out_Net varchar(40),In_Net varchar(40)");
+	db.create_table("T_NET_Hang_out", "Net varchar(40)");//悬空OUT
+	db.create_table("T_NET_Hang_in", "Net varchar(40)"); //悬空IN
+	db.create_table("T_NET_Unkown_Out", "Net varchar(40)");//未知输出引脚,无法检测
+	db.create_table("T_NET_Unkown_In", "Net varchar(40)");//未知接收引脚,无法检测
+	insert_ChainNet_info(db, Net_inout, Net_out_Hang,Net_Out_Unkown, Net_in_Hang,Net_In_Unkown);
 	db.disconnect();
 }
 void MyDataBase::Process_Chain_road(const size_t& x,MyDataBase db,const string &str1,const string& temp_str, int chain_num, vector<string>& Mark, vector<vector<string>>& Chain_info)//单链生成
@@ -928,7 +931,7 @@ void insert_chain_info(MyDataBase db,const vector<vector<string>>& Chain_info)
 		db.insert_chain_table("Chain_info", tem1, tem2, tem3, tem4, "chain_num", "chain_level", "componment_u", "componment_u_info");
 	}
 }
-void inNet_outNet(MyDataBase db,const vector<string>& Out_node, const vector<string>& In_node,const vector<vector<string>>& chain_info,vector<vector<string>>& Net_inout, vector<vector<string>>& Net_out_Hang, vector<vector<string>>&Net_Out_Unkown)//这个chain_u仅仅只有一个元素
+void outNet(MyDataBase db,const vector<string>& Out_node, const vector<string>& In_node,const vector<vector<string>>& chain_info,vector<vector<string>>& Net_inout, vector<vector<string>>& Net_out_Hang, vector<vector<string>>&Net_Out_Unkown)//这个chain_u仅仅只有一个元素
 {
 	bool deci = 0;
 	for (auto v = 0; v != chain_info.size(); ++v)
@@ -1051,6 +1054,7 @@ void inNet_outNet(MyDataBase db,const vector<string>& Out_node, const vector<str
 							if (logic_name[0] == x)
 							{
 								tem = 1;
+								break;
 							}
 						}
 						if (tem == 1)//透明元件接的U的in脚
@@ -1089,20 +1093,73 @@ void inNet_outNet(MyDataBase db,const vector<string>& Out_node, const vector<str
 	}
 	
 }
-void insert_ChainNet_info(MyDataBase db, const vector<vector<string>>& Net_inout,const vector<vector<string>>& Net_out_Hang)
+void insert_ChainNet_info(MyDataBase db, const vector<vector<string>>& Net_inout,const vector<vector<string>>& Net_out_Hang, const vector<vector<string>>&Net_Out_Unkown, const vector<vector<string>>& Net_in_hang, const vector<vector<string>>& Net_In_Unkown)
 {
 	for (auto i = 0; i != Net_inout.size(); i++)
 	{
 		string tem1, tem2;
-		tem1 = Net_inout[i][0];
-		tem2 = Net_inout[i][1];
-		db.insert_port_table("NET_inout", tem1, tem2, "Out_Net", "In_Net");
+		tem1 = Net_inout[i][0];//OUT
+		tem2 = Net_inout[i][1];//IN
+		db.insert_port_table("T_NET_inout", tem1, tem2, "Out_Net", "In_Net");
 	}
 	for (auto i = 0; i != Net_out_Hang.size(); i++)
 	{
 		string tem1;
 		tem1 = Net_out_Hang[i][0];
-		db.insert_Hang_table("NET_Hang_inout", tem1, "NET_Hang_out");
+		db.insert_Hang_table("T_NET_Hang_out", tem1, "NET");
+	}
+	for (auto i = 0; i != Net_Out_Unkown.size(); i++)
+	{
+		string tem1;
+		tem1 = Net_Out_Unkown[i][0];
+		db.insert_Hang_table("T_NET_Unkown_Out", tem1, "NET");
+	}
+	for (auto i = 0; i != Net_In_Unkown.size(); i++)
+	{
+		string tem1;
+		tem1 = Net_In_Unkown[i][0];
+		db.insert_Hang_table("T_NET_Unkown_In", tem1, "NET");
+	}
+	for (auto i = 0; i != Net_in_hang.size(); i++)
+	{
+		string tem1;
+		tem1 = Net_in_hang[i][0];
+		db.insert_Hang_table("T_NET_Hang_in", tem1, "NET");
 	}
 
+}
+void inNet(MyDataBase db, const vector<string>& Out_node, const vector<string>& In_node, const vector<vector<string>>& chain_info, const vector<vector<string>>& Net_inout, vector<vector<string>>& Net_in_Hang, vector<vector<string>>& Net_In_Unkown)
+{
+	for (auto v = 0; v != chain_info.size(); ++v)
+	{
+		for (auto j = 0; j != In_node.size(); ++j)
+		{
+			vector<string>comp = db.select_Chain_U(chain_info[v][0], chain_info[v][1]);//确定第一个U
+			vector<string>node = db.select_constant_io(chain_info[v][3], In_node[j]);//确定U的引脚
+			string m = "-";
+			string chain_pin = comp[0] + m + node[0];//引脚
+			vector<string>net_name = db.select_net_name(chain_pin);//寻找管脚所在网络名,仅一个元素
+			bool ghs = 0;
+			for (auto m = 0; m != Net_inout.size(); ++m)//遍历可测网络,选出不是
+			{
+				if (net_name[0] == Net_inout[m][1])
+				{
+					ghs = 1;
+					break;
+				}
+			}
+			if (ghs != 1)//非可测IN网络
+			{
+				vector<string>node_name = db.select_node_name(net_name[0]);//存下所在网络的两个元素(管教名)或一个元素(不考虑三个元素情况)
+				if (node_name.size() != 1)//不为悬空脚
+				{
+					Net_In_Unkown.push_back(net_name);
+				}
+				else//此时管脚为悬空态
+				{
+				    Net_in_Hang.push_back(net_name);
+				}
+			}
+		}
+	}
 }
