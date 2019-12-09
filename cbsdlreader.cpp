@@ -1,4 +1,4 @@
-#include"cbsdlreader.h"
+#include"cbsdlreader.h"/*解析BSDL文件的主程序,包含各种关键字的解析,并分类保存在不同的vector里面*/
 #include<vector>
 #include<regex>
 #include<iostream>
