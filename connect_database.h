@@ -1,6 +1,6 @@
-#include <winsock.h>
+﻿#include <winsock.h>
 #include <mysql.h>
-#pragma comment(lib,"libmySQL.lib")  //Ҫ�Ӳ�Ȼ��������
+#pragma comment(lib,"libmySQL.lib")  //Òª¼Ó²»È»»á±àÒë³ö´í
 #include <string>
 #include <vector>
 #include <iostream>
@@ -20,7 +20,7 @@ private:
 	vector<string>Chain_TDI;
 	vector<string>Mark;
 	vector<vector<string>>Chain_info;
-	vector<string>Out_node{"Y1(1)","Y1(2)", "Y1(3)", "Y1(4)", "Y2(1)", "Y2(2)", "Y2(3)", "Y2(4)"};
+	vector<string>Out_node{ "Y1(1)","Y1(2)", "Y1(3)", "Y1(4)", "Y2(1)", "Y2(2)", "Y2(3)", "Y2(4)" };
 	vector<string>In_node{ "A1(1)","A1(2)", "A1(3)", "A1(4)", "A2(1)", "A2(2)", "A2(3)", "A2(4)" };
 	vector<vector<string>>Net_inout;
 	vector<vector<string>>Net_out_Hang;
@@ -48,8 +48,9 @@ public:
 	vector<string> select_Chain_U(const string& limits1, const string& limits2);
 	vector<string> select_constant_logic_name(const string& str1, const string& IOname);
 	void insert_table(const string& table, const string& value);
-	void insert_port_table(const string& table, const string& one, const string& two, const string& col1,const string& col2);
+	void insert_port_table(const string& table, const string& one, const string& two, const string& col1, const string& col2);
 	void insert_Hang_table(const string& table, const string& one, const string& col1);
+	void insert_Netinout_table(const string& table, const string& one, const string& two, const string& three, const string& col1, const string& col2, const string& col3);
 	void delete_table(const string& table, const string& value);
 	void delete_table(const string& table);
 	void update_table(const string& table, const string& value, const string& limits);
@@ -61,6 +62,6 @@ public:
 	void insert_BR_table(const string& table, const string& one, const string& two, const string& three, const string& four, const string& five, const string& col1, const string& col2, const string& col3, const string& col4, const string& col5);
 	void insert_chain_table(const string& table, const string& one, const string& two, const string& three, const string& four, const string& col1, const string& col2, const string& col3, const string& col4);
 	void Process_Chain(const string& str1);
-	void Process_Chain_road(const size_t& x,MyDataBase db, const string& str1, const string& temp_str, int chain_num,vector<string>& Mark, vector<vector<string>>& Chain_info);
+	void Process_Chain_road(const size_t& x, MyDataBase db, const string& str1, const string& temp_str, int chain_num, vector<string>& Mark, vector<vector<string>>& Chain_info);
 	vector<vector<string>> Process_All_Chain(MyDataBase db, const string& str1);
-};
+}; 
