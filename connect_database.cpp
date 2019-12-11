@@ -425,7 +425,7 @@ void MyDataBase::query(const string& limits, const string& command) {
 	}
 	cout << "query success!" << endl;
 }
-string MyDataBase::Process_database(const vector<vector<string>>& a, const vector<vector<string>>& b, const vector<vector<string>>& c, const vector<string>& end_info, const vector<vector<string>>& d, const vector<vector<string>>& e)
+string MyDataBase::Process_database(const string& password,const vector<vector<string>>& a, const vector<vector<string>>& b, const vector<vector<string>>& c, const vector<string>& end_info, const vector<vector<string>>& d, const vector<vector<string>>& e)
 {
 	MyDataBase mdb;
 	vector<vector<string>>port_v = a;
@@ -437,7 +437,7 @@ string MyDataBase::Process_database(const vector<vector<string>>& a, const vecto
 	tem3 = tem1 + "_constant";
 	tem4 = tem1 + "_boundary_register";
 	tem5 = tem1 + "_BSDL_DATA";
-	mdb.connect("localhost", "root", "change");
+	mdb.connect("localhost", "root", password);
 	mdb.delete_database(tem5);
 	mdb.create_database(tem5);
 	mdb.use_database(tem5);
@@ -586,10 +586,10 @@ void insert_info(MyDataBase mdb, const string& tem2, const string& tem3, const s
 		mdb.insert_port_table("componment_info", temp7, temp8, "componment_name", "componment_type");
 	}
 }
-void MyDataBase::Process_Chain(const string& str1)
+void MyDataBase::Process_Chain(const string& str1,const string& password)
 {
 	MyDataBase db;
-	db.connect("localhost", "root", "change");
+	db.connect("localhost", "root", password);
 	db.use_database(str1 + "_BSDL_DATA");
 	vector<vector<string>>Chain = db.Process_All_Chain(db, str1);
 	db.create_table("Chain_info", "chain_num varchar(40),chain_level varchar(40),componment_u varchar(40),componment_u_info varchar(40)");

@@ -24,17 +24,21 @@
 using namespace std;
 int main()
 {
-	ifstream inFile_BSDL("C:/Users/changeneversay/Desktop/边界扫描/BS文件/bsdl文件/SN74BCT8244A.bsdl");
+	string password = "change";//修改密码
+	string BSDL_Path = "C:/Users/changeneversay/Desktop/边界扫描/BS文件/bsdl文件/SN74BCT8244A.bsdl";//BSDL文件路径
+	string Netlist_Path = "C:/Users/changeneversay/Desktop/边界扫描/BScan_Demo/BScan_Demo_2.NET";//网表路径
+
+
+	ifstream inFile_BSDL(BSDL_Path);
 	ostringstream temp;
 	temp << inFile_BSDL.rdbuf();
 	string BsdlFileContent = temp.str();
 	CBsdlReader* reader = new CBsdlReader;
 	reader->ProcessBsdlFile(BsdlFileContent);//执行BSDL文件解析
 
-
-	string dir = "C:/Users/changeneversay/Desktop/边界扫描/BScan_Demo/BScan_Demo_2.NET";
+	
 	string type = "DefaultType";
-	ReadNetListContext* p = new ReadNetListContext(type, dir);
+	ReadNetListContext* p = new ReadNetListContext(type, Netlist_Path);
 	ReadNetList* p0 = p->getNetListp();      // 指向 解析相应网表的派生类 的基类指针
 	auto netNum = p0->getNetNum();
 	//cout << netNum << endl;
@@ -45,10 +49,12 @@ int main()
 	auto c = reader->Get_BRdata();
 	auto a = reader->Get_portdata();
 	auto b = reader->Get_constantdata();
-	auto end_info = reader->Get_Enddata();
+	auto end_info = reader->Get_Enddata();//获取vector网表信息
+
+
 	MyDataBase m;
-	string y = m.Process_database(a,b,c,end_info,netListInfo,componentInfo);
-	m.Process_Chain(y);
+	string y = m.Process_database(password,a, b, c, end_info, netListInfo, componentInfo);//数据插入数据库
+	m.Process_Chain(y,password);//在数据库中生成测试链路
 	delete reader;
 	reader = nullptr;
 	delete p;
